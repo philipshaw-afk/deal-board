@@ -312,7 +312,7 @@ const errMsg = e => (e && (e.message || e.error_description)) || "Something went
 const liveApi = {
   async load() {
     const t = today(), since = new Date(Date.now() - 14 * 864e5).toISOString(), d60 = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10);
-    const dcols = "id,deal_number,temp_id,target,bidder,seller,target_country,region,is_public,sector,deal_type,deal_status,is_pending,admin_state,coverage_status,reason_not_covered,value,currency,value_eur,fx_rate,fx_date,date_announced,date_found,source_url,owner_id,exported_at,export_path,writing_note";
+    const dcols = "id,deal_number,temp_id,target,bidder,seller,target_country,region,is_public,sector,deal_type,deal_status,is_pending,admin_state,coverage_status,reason_not_covered,value,currency,value_eur,fx_rate,fx_date,date_announced,date_found,source_url,owner_id,exported_at,export_path,writing_note,urgent_at";
     const [team, abs, rules, cards, deals] = await Promise.all([
       sb.from("team_members").select("*").eq("active", true).order("name"),
       sb.from("absences").select("*").gte("end_date", t).order("start_date"),
@@ -353,6 +353,7 @@ const liveApi = {
   excludeDeal: (id, reason) => liveApi.rpc("exclude_deal", { p_deal: id, p_reason: reason || null }),
   restoreDeal: id => liveApi.rpc("restore_deal", { p_deal: id }),
   claimDeal: id => liveApi.rpc("claim_deal", { p_deal: id }),
+  writeNow: id => liveApi.rpc("write_now", { p_deal: id }),
   setDealOwner: (id, m) => liveApi.rpc("set_deal_owner", { p_deal: id, p_member: m }),
   comment: (id, b) => liveApi.rpc("add_comment", { p_card: id, p_body: b }),
   async pdfText(file) {
@@ -427,6 +428,7 @@ const demo = (() => {
     async decide(id, d, note) { const c = find(id); c.decision = d; c.decision_note = note; c.status = "done"; c.done_by = me(); log(id, d === "write" ? "Decision: write it" : "Decision: skip"); if (c.deal_id) deals[c.deal_id].coverage_status = d === "write" ? "write_requested" : "logged_only"; },
     async requestReport(id) { deals[id].coverage_status = "write_requested"; },
     async excludeDeal(id, reason) { deals[id].coverage_status = "excluded"; deals[id].reason_not_covered = reason || "Removed: does not belong on the list"; cards.forEach(c => { if (c.deal_id === id && c.type === "decision" && c.status === "open") { c.status = "done"; c.decision = "skip"; } }); },
+    async writeNow(id) { deals[id].coverage_status = "write_requested"; deals[id].urgent_at = new Date().toISOString(); },
     async claimDeal(id) { deals[id].coverage_status = "reported"; deals[id].owner_id = me(); deals[id].writing_note = "Being written by " + S.me.name + " (not by the report writer)"; },
     async restoreDeal(id) { deals[id].coverage_status = "logged_only"; deals[id].reason_not_covered = "Restored to the list"; },
     async setDealOwner(id, m) { deals[id].owner_id = m; },
@@ -557,8 +559,8 @@ function viewFound() {
     <td>${esc(d.bidder || "")}<small>${d.seller ? "Seller: " + esc(d.seller) : ""}</small></td>
     <td>${d.is_public ? "Public" : esc(d.deal_type || "Private")}</td>
     <td class="r">${d.value != null ? esc((d.currency || "") + " " + fmtN(d.value) + "m") : "Not disclosed"}${d.value_eur != null && d.currency !== "EUR" ? `<small>EUR ${fmtN(d.value_eur)}m</small>` : ""}</td>
-    <td><span class="tag cov-${esc(d.coverage_status)}">${esc(COVERAGE[d.coverage_status])}</span>${d.reason_not_covered && d.coverage_status !== "reported" ? `<small>${esc(d.reason_not_covered)}</small>` : ""}${d.writing_note && !d.deal_number ? `<small>${esc(d.writing_note)}</small>` : ""}</td>
-    <td>${canEdit() && (d.coverage_status === "logged_only" || d.coverage_status === "awaiting_decision") ? `<button class="btn sm" data-write="${esc(d.id)}">Write report</button>` : ""}${canEdit() && ["write_requested","logged_only","awaiting_decision"].includes(d.coverage_status) ? ` <button class="btn sm" data-claim="${esc(d.id)}" title="Takes it out of the report writer's queue and puts it in your name">I'll write it</button>` : ""}${canEdit() && !d.deal_number && d.coverage_status !== "reported" && d.coverage_status !== "excluded" ? (S.removing === d.id ? `<div class="rm"><input id="rmreason" placeholder="Why? e.g. not European" aria-label="Reason for removing"><button class="btn sm" data-rmgo="${esc(d.id)}">Remove</button><button class="btn sm" data-rmcancel>Cancel</button></div>` : ` <button class="btn sm" data-rm="${esc(d.id)}">Remove</button>`) : ""}${canEdit() && d.coverage_status === "excluded" ? `<button class="btn sm" data-restore="${esc(d.id)}">Put back</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`
+    <td><span class="tag cov-${esc(d.coverage_status)}">${esc(COVERAGE[d.coverage_status])}</span>${d.reason_not_covered && d.coverage_status !== "reported" ? `<small>${esc(d.reason_not_covered)}</small>` : ""}${d.urgent_at && d.coverage_status === "write_requested" ? `<small><b>Urgent: next to be written</b></small>` : ""}${d.writing_note && !d.deal_number ? `<small>${esc(d.writing_note)}</small>` : ""}</td>
+    <td>${canEdit() && (d.coverage_status === "logged_only" || d.coverage_status === "awaiting_decision") ? `<button class="btn sm" data-write="${esc(d.id)}">Write report</button>` : ""}${canEdit() && !d.deal_number && ["write_requested","logged_only","awaiting_decision"].includes(d.coverage_status) && !(d.coverage_status === "write_requested" && d.urgent_at) ? ` <button class="btn sm" data-now="${esc(d.id)}" title="Urgent: the report writer takes this one next, ahead of the queue">Write now</button>` : ""}${canEdit() && ["write_requested","logged_only","awaiting_decision"].includes(d.coverage_status) ? ` <button class="btn sm" data-claim="${esc(d.id)}" title="Takes it out of the report writer's queue and puts it in your name">I'll write it</button>` : ""}${canEdit() && !d.deal_number && d.coverage_status !== "reported" && d.coverage_status !== "excluded" ? (S.removing === d.id ? `<div class="rm"><input id="rmreason" placeholder="Why? e.g. not European" aria-label="Reason for removing"><button class="btn sm" data-rmgo="${esc(d.id)}">Remove</button><button class="btn sm" data-rmcancel>Cancel</button></div>` : ` <button class="btn sm" data-rm="${esc(d.id)}">Remove</button>`) : ""}${canEdit() && d.coverage_status === "excluded" ? `<button class="btn sm" data-restore="${esc(d.id)}">Put back</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`
   : `<div class="empty"><b>Nothing logged yet</b>The first daily run fills this list.</div>`}`;
 }
 function viewTeam() {
@@ -653,6 +655,7 @@ document.addEventListener("click", async e => {
   if ((t = el("[data-status]"))) { S.status = t.dataset.status; return render(); }
   if (el("[data-close]")) return closeCard();
   if ((t = el("[data-write]"))) return act(() => api.requestReport(t.dataset.write), "Queued. The next run will write the report.");
+  if ((t = el("[data-now]"))) return act(() => api.writeNow(t.dataset.now), "Marked urgent. The report writer takes it on its next run.");
   if ((t = el("[data-claim]"))) return act(() => api.claimDeal(t.dataset.claim), "It's yours. The report writer will leave it alone.");
   if ((t = el("[data-rm]"))) { S.removing = t.dataset.rm; render(); const i = $("#rmreason"); if (i) i.focus(); return; }
   if (el("[data-rmcancel]")) { S.removing = null; return render(); }
