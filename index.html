@@ -16,7 +16,7 @@
   --g:#0B8A5E; --gb:rgba(13,155,106,.12);
   --am:#9A6C00; --ab:rgba(176,125,0,.14);
   --r:#C93516; --rb:rgba(220,62,27,.11);
-  --p:#6B4AE8; --pb:rgba(124,92,252,.12);
+  --p:#6B4AE8; --pb:rgba(124,92,252,.12); --pub:#9333EA; --pubb:rgba(147,51,234,.12);
   --tl:#0D7490; --tb:rgba(13,116,144,.12);
   --in:#4338CA; --ib:rgba(67,56,202,.10);
   --sh:0 1px 3px rgba(0,0,0,.05),0 0 0 1px rgba(0,0,0,.03); --sm:0 12px 40px rgba(15,23,41,.16);
@@ -30,7 +30,7 @@
   --b:rgba(255,255,255,.12); --b2:rgba(255,255,255,.07);
   --a:#7F97FF; --al:rgba(127,151,255,.16); --ah:#9DB0FF; --on-a:#0D1220;
   --g:#3CCB97; --gb:rgba(60,203,151,.16); --am:#E5B542; --ab:rgba(229,181,66,.16);
-  --r:#FF7A5C; --rb:rgba(255,122,92,.16); --p:#A891FF; --pb:rgba(168,145,255,.16);
+  --r:#FF7A5C; --rb:rgba(255,122,92,.16); --p:#A891FF; --pb:rgba(168,145,255,.16); --pub:#C99BFF; --pubb:rgba(201,155,255,.18);
   --tl:#4FC3DD; --tb:rgba(79,195,221,.15); --in:#9A93FF; --ib:rgba(154,147,255,.15);
   --sh:0 0 0 1px rgba(255,255,255,.07); --sm:0 12px 40px rgba(0,0,0,.5);
   --hdr:rgba(21,28,46,.9); --scrim:rgba(0,0,0,.55); color-scheme:dark } }
@@ -39,7 +39,7 @@
   --b:rgba(255,255,255,.12); --b2:rgba(255,255,255,.07);
   --a:#7F97FF; --al:rgba(127,151,255,.16); --ah:#9DB0FF; --on-a:#0D1220;
   --g:#3CCB97; --gb:rgba(60,203,151,.16); --am:#E5B542; --ab:rgba(229,181,66,.16);
-  --r:#FF7A5C; --rb:rgba(255,122,92,.16); --p:#A891FF; --pb:rgba(168,145,255,.16);
+  --r:#FF7A5C; --rb:rgba(255,122,92,.16); --p:#A891FF; --pb:rgba(168,145,255,.16); --pub:#C99BFF; --pubb:rgba(201,155,255,.18);
   --tl:#4FC3DD; --tb:rgba(79,195,221,.15); --in:#9A93FF; --ib:rgba(154,147,255,.15);
   --sh:0 0 0 1px rgba(255,255,255,.07); --sm:0 12px 40px rgba(0,0,0,.5);
   --hdr:rgba(21,28,46,.9); --scrim:rgba(0,0,0,.55); color-scheme:dark }
@@ -130,6 +130,8 @@ td small{display:block;color:var(--t3);font-size:11.5px}
 .cov-reported{background:var(--gb);color:var(--g)} .cov-awaiting_decision{background:var(--ab);color:var(--am)}
 .cov-write_requested{background:var(--pb);color:var(--p)} .cov-logged_only{background:var(--b2);color:var(--t2)} .cov-excluded{background:var(--rb);color:var(--r)}
 .addf{border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:14px;background:var(--sf)} .addf h2{font-size:14px;margin:0 0 10px} .addf .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px} .addf label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:600;color:var(--t2)} .addf input,.addf select{border:1px solid var(--b);border-radius:8px;padding:7px 9px;background:var(--bg);color:var(--t);font:inherit;font-weight:400;min-width:0} .addf .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px} .addf .hint{font-size:11.5px;color:var(--t2)}
+.pub b,.pub b a,.row.pub .ti b{color:var(--pub)} .pub b a:hover{color:var(--pub);text-decoration:underline} .pubtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:var(--pubb);color:var(--pub);font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;vertical-align:middle} tr.pubrow .qn{background:var(--pubb);color:var(--pub)} tr.pubrow.next .qn{background:var(--pub);color:#fff}
+.row.bad{box-shadow:inset 3px 0 0 var(--r);background:var(--rb)} .row.bad .ti b,.row.bad.fin .ti b{color:var(--r);font-weight:600} .errtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:var(--r);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;vertical-align:middle}
 .asg{max-width:112px;cursor:pointer} .qn{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:14px;background:var(--pb);color:var(--p);font-weight:700;font-size:13px} tr.next .qn{background:var(--a);color:var(--on-a)} tr.next td{background:color-mix(in srgb,var(--a) 6%,transparent)} h2.sec{font-size:15px;margin:22px 0 10px}
 .rm{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px} .rm input{flex:1;min-width:150px;border:1px solid var(--b);border-radius:8px;padding:6px 9px;background:var(--bg)}
 .people{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:22px}
@@ -478,9 +480,10 @@ function tickBtn(c) {
 function rowHtml(c, showType) {
   const d = dealOf(c), late = c.status === "open" && c.due_date && c.due_date < today();
   const sub = [c.meta && c.meta.updates > 1 ? c.meta.updates + " updates" : null, dealLine(d), c.created_by && c.created_by !== "daily-run" ? "from " + c.created_by : null].filter(Boolean).join(" · ");
-  return `<div class="row${S.sel === c.id ? " sel" : ""}${c.status === "done" || c.status === "verified" ? " fin" : ""}" data-card="${esc(c.id)}" role="button" tabindex="0">
+  const pub = S.tab === "tocheck" && d && d.is_public;
+  return `<div class="row${pub ? " pub" : ""}${c.check_failed ? " bad" : ""}${S.sel === c.id ? " sel" : ""}${c.status === "done" || c.status === "verified" ? " fin" : ""}" data-card="${esc(c.id)}" role="button" tabindex="0">
     ${tickBtn(c)}
-    <span class="ti"><b>${esc(c.title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>
+    <span class="ti"><b>${esc(c.title)}${pub ? `<span class="pubtag">Public</span>` : ""}${c.check_failed ? `<span class="errtag">Possible error</span>` : ""}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>
     <span class="tg">${showType ? `<span class="tag" style="background:var(--${TYPES[c.type].c === "t2" ? "b2" : TYPES[c.type].c === "am" ? "ab" : TYPES[c.type].c === "in" ? "ib" : TYPES[c.type].c + "b"});color:var(--${TYPES[c.type].c})">${esc(TYPES[c.type].l)}</span>` : (c.qa_flags && c.qa_flags.length ? `<span class="tag" style="background:var(--ab);color:var(--am)">${c.qa_flags.length} QA flag${c.qa_flags.length > 1 ? "s" : ""}</span>` : "")}</span>
     <span class="pill ${c.status}">${STATUS[c.status]}</span>
     ${avatar(c.assignee_id, c.owner_id)}
@@ -491,8 +494,8 @@ function groupByType(cards) {
   return TYPE_ORDER.map(t => { const g = cards.filter(c => c.type === t); if (!g.length) return "";
     return `<section class="grp" style="--gc:var(--${TYPES[t].c})"><h2>${esc(TYPES[t].l)} <span>${g.length}</span></h2><div class="list">${g.map(c => rowHtml(c, false)).join("")}</div></section>`; }).join("");
 }
-const sortCards = a => a.slice().sort((x, y) => (({ stuck: 0, open: 1, done: 2, verified: 3 })[x.status] - ({ stuck: 0, open: 1, done: 2, verified: 3 })[y.status]) || (x.due_date || "").localeCompare(y.due_date || "") || y.created_at.localeCompare(x.created_at));
-const activeOnly = c => c.status === "open" || c.status === "stuck";
+const sortCards = a => a.slice().sort((x, y) => ((y.check_failed ? 1 : 0) - (x.check_failed ? 1 : 0)) || (({ stuck: 0, open: 1, done: 2, verified: 3 })[x.status] - ({ stuck: 0, open: 1, done: 2, verified: 3 })[y.status]) || (x.due_date || "").localeCompare(y.due_date || "") || y.created_at.localeCompare(x.created_at));
+const activeOnly = c => c.status === "open" || c.status === "stuck" || (c.check_failed && c.status !== "verified");
 const matchQ = c => { if (!S.q) return true; const q = S.q.toLowerCase(); return (c.title + " " + dealLine(dealOf(c))).toLowerCase().includes(q); };
 
 function viewMyWork() {
@@ -539,11 +542,11 @@ function ownerCell(d) {
 }
 function viewPending() {
   const q = S.q.toLowerCase();
-  const ds = Object.values(S.deals).filter(d => d.is_pending && (!q || dealLine(d).toLowerCase().includes(q))).sort((a, b) => (a.target || "").localeCompare(b.target || ""));
+  const ds = Object.values(S.deals).filter(d => d.is_pending && (!q || dealLine(d).toLowerCase().includes(q))).sort((a, b) => (a.review_due || "9999").localeCompare(b.review_due || "9999") || (a.target || "").localeCompare(b.target || ""));
   const openFor = id => S.cards.filter(c => c.deal_id === id && activeOnly(c)).length;
-  return `<div class="top"><div><div class="eyebrow">DIANA · Pending deals</div><h1>Pending deals</h1><p>Every deal still in progress, with the person responsible and when its database PDF was last uploaded here.</p></div><span class="sp"></span><div class="stats"><div class="stat"><b>${ds.length}</b><span>Pending</span></div><div class="stat${ds.some(d => d.deal_number && !d.exported_at) ? " warn" : ""}"><b>${ds.filter(d => d.deal_number && !d.exported_at).length}</b><span>No export yet</span></div></div></div>
+  return `<div class="top"><div><div class="eyebrow">DIANA · Pending deals</div><h1>Pending deals</h1><p>Every deal still in progress, with the person responsible and when its database PDF was last uploaded here. Earliest expected completion first; deals with no date are at the end.</p></div><span class="sp"></span><div class="stats"><div class="stat"><b>${ds.length}</b><span>Pending</span></div><div class="stat${ds.some(d => d.deal_number && !d.exported_at) ? " warn" : ""}"><b>${ds.filter(d => d.deal_number && !d.exported_at).length}</b><span>No export yet</span></div></div></div>
   <div class="filters"><input type="search" id="q" placeholder="Filter by company or deal number" value="${esc(S.q)}" aria-label="Filter deals"></div>
-  ${ds.length ? `<div class="tw"><table><thead><tr><th>Deal</th><th>Type</th><th>Status</th><th>Responsible</th><th>Next review</th><th>Last export</th><th class="r">Open cards</th></tr></thead><tbody>${ds.map(d => `<tr>
+  ${ds.length ? `<div class="tw"><table><thead><tr><th>Deal</th><th>Type</th><th>Status</th><th>Responsible</th><th>Expected completion / next review &#9650;</th><th>Last export</th><th class="r">Open cards</th></tr></thead><tbody>${ds.map(d => `<tr>
     <td><b>${esc(d.target)}</b><small>${esc([d.deal_number ? "#" + d.deal_number : "No number yet", d.bidder, d.target_country].filter(Boolean).join(" · "))}</small></td>
     <td>${d.is_public ? "Public" : esc(d.deal_type || "Private")}<small>${esc(REGIONS[d.region] || "")}</small></td>
     <td>${esc(d.deal_status || "")}<small>${esc(d.admin_state || "Not uploaded")}</small></td>
@@ -583,11 +586,11 @@ function viewQueue() {
   const hand = Object.values(S.deals).filter(d => d.coverage_status === "reported" && !d.deal_number && d.writing_note), byHand = hand.filter(d => d.writing_note.startsWith("Being written by")).sort((a, b) => (a.target || "").localeCompare(b.target || ""));
   const written = hand.filter(d => !d.writing_note.startsWith("Being written by")).sort((a, b) => (a.target || "").localeCompare(b.target || ""));
   const val = d => `${d.value != null ? esc((d.currency || "") + " " + fmtN(d.value) + "m") : "Not disclosed"}${d.value_eur != null && d.currency !== "EUR" ? `<small>EUR ${fmtN(d.value_eur)}m</small>` : ""}`;
-  const name = d => `<b>${safeUrl(d.source_url) ? `<a href="${esc(d.source_url)}" target="_blank" rel="noopener">${esc(d.target)}</a>` : esc(d.target)}</b><small>${esc([d.target_country, d.is_public ? "Public" : (d.deal_type || "Private")].filter(Boolean).join(" · "))}</small>`;
+  const name = d => `<span${d.is_public ? ' class="pub"' : ""}><b>${safeUrl(d.source_url) ? `<a href="${esc(d.source_url)}" target="_blank" rel="noopener">${esc(d.target)}</a>` : esc(d.target)}</b>${d.is_public ? `<span class="pubtag">Public</span>` : ""}</span><small>${esc([d.target_country, d.is_public ? "Public" : (d.deal_type || "Private")].filter(Boolean).join(" · "))}</small>`;
   const writing = d => d.writing_started_at && Date.now() - new Date(d.writing_started_at).getTime() < 4 * 36e5;
-  return `<div class="top"><div><div class="eyebrow">DIANA · Report queue</div><h1>Report queue</h1><p>Reports waiting to be written, in the order the report writer will take them: urgent ones first, then the largest. It writes one each hour at quarter to, 9am to 4pm on weekdays, and puts it on the admin site as a draft.</p></div><span class="sp"></span><div class="stats"><div class="stat${q.length ? " warn" : ""}"><b>${q.length}</b><span>Waiting</span></div><div class="stat"><b>${urgent}</b><span>Urgent</span></div><div class="stat"><b>${byHand.length}</b><span>With a person</span></div></div>${canEdit() && !S.adding ? `<button class="btn pri" data-addopen>Add a deal</button>` : ""}</div>
+  return `<div class="top"><div><div class="eyebrow">DIANA · Report queue</div><h1>Report queue</h1><p>Reports waiting to be written, in the order the report writer will take them: urgent ones first, then the largest. It writes one each hour at quarter to, day and night from Monday to Friday, and puts it on the admin site as a draft. Public deals are shown in purple.</p></div><span class="sp"></span><div class="stats"><div class="stat${q.length ? " warn" : ""}"><b>${q.length}</b><span>Waiting</span></div><div class="stat"><b>${urgent}</b><span>Urgent</span></div><div class="stat"><b>${byHand.length}</b><span>With a person</span></div></div>${canEdit() && !S.adding ? `<button class="btn pri" data-addopen>Add a deal</button>` : ""}</div>
   ${canEdit() && S.adding ? addForm() : ""}
-  ${q.length ? `<div class="tw"><table class="qt"><thead><tr><th>Order</th><th>Target</th><th>Bidder / seller</th><th class="r">Value</th><th>Note</th><th></th></tr></thead><tbody>${q.map(d => { const pos = ready.indexOf(d) + 1; return `<tr${pos === 1 ? ' class="next"' : ""}>
+  ${q.length ? `<div class="tw"><table class="qt"><thead><tr><th>Order</th><th>Target</th><th>Bidder / seller</th><th class="r">Value</th><th>Note</th><th></th></tr></thead><tbody>${q.map(d => { const pos = ready.indexOf(d) + 1; return `<tr class="${pos === 1 ? "next" : ""}${d.is_public ? " pubrow" : ""}">
     <td class="num">${held.has(d.id) ? `<span class="tag cov-logged_only">On hold</span>` : `<span class="qn">${pos}</span>${writing(d) ? `<small><b>Being written now</b></small>` : pos === 1 ? `<small><b>Next</b></small>` : ""}`}${d.urgent_at ? `<small><span class="tag cov-excluded">Urgent</span></small>` : ""}</td>
     <td>${name(d)}</td>
     <td>${esc(d.bidder || "")}<small>${d.seller ? "Seller: " + esc(d.seller) : ""}</small></td>
@@ -656,7 +659,7 @@ function drawerHtml() {
       ${wantsExport && activeOnly(c) ? `<div class="ask">When you've made the change, attach the fresh PDF export below. DIANA reads it and checks the update went in correctly.</div>` : ""}
       ${c.detail || T.h || src ? `<div class="sec"><h4>What happened</h4>${c.detail ? `<p>${esc(c.detail)}</p>` : T.h ? `<p>${esc(T.h)}</p>` : ""}${src ? `<p style="margin-top:6px"><a href="${esc(src)}" target="_blank" rel="noopener">Open the source ↗</a></p>` : ""}</div>` : ""}
       ${c.decision ? `<div class="sec"><h4>Decision</h4><p>${c.decision === "write" ? "Write it" : "Skip"}${c.decision_note ? " · " + esc(c.decision_note) : ""}</p></div>` : ""}
-      ${c.verify_note ? `<div class="sec"><h4>DIANA's check of the uploaded report</h4><p${c.status === "verified" ? "" : ' class="ask" style="background:var(--rb);color:var(--r)"'}>${esc(c.verify_note)}</p></div>` : ""}
+      ${c.verify_note ? `<div class="sec"><h4>DIANA's check of the uploaded report${c.check_failed ? ` <span class="errtag">Possible error</span>` : ""}</h4>${c.check_failed ? `<p style="font-size:12px;color:var(--t2);margin:0 0 6px">Correct the report on the admin site, export the PDF again and attach it here: the flag clears when the new file passes. If the check is wrong, leave the card ticked Done.</p>` : ""}<p${c.status === "verified" ? "" : ' class="ask" style="background:var(--rb);color:var(--r)"'}>${esc(c.verify_note)}</p></div>` : ""}
       ${metaRows ? `<div class="sec"><h4>Figures</h4><dl class="kv">${metaRows}</dl></div>` : ""}
       ${c.qa_flags && c.qa_flags.length ? `<div class="sec"><h4>QA flags</h4><ul class="qa">${c.qa_flags.map(f => `<li>${esc(typeof f === "string" ? f : JSON.stringify(f))}</li>`).join("")}</ul></div>` : ""}
       ${x && x.draft ? `<div class="sec"><h4>Draft report</h4><p style="color:var(--t2)">Written ${esc(fmtDT(x.draft.created_at))}${x.draft.folder ? " · files in " + esc(x.draft.folder) : ""}${x.draft.uploaded_at ? " · uploaded " + esc(fmtDT(x.draft.uploaded_at)) : ""}</p>${x.draft.reviewer_note ? `<p class="ask" style="margin-top:6px">Independent review: ${esc(x.draft.reviewer_note)}</p>` : ""}${x.draft.upload_result ? `<p style="margin-top:6px">Upload: ${esc(x.draft.upload_result)}</p>` : ""}<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:600;color:var(--a)">Read the draft (${Math.round(x.draft.content.length / 1000)}k characters)</summary><div class="acts" style="margin:8px 0"><button class="btn sm" data-copydraft>Copy the text</button></div><pre id="drafttext" style="white-space:pre-wrap;overflow-wrap:anywhere;font:500 11.5px/1.5 var(--mono);background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:12px;max-height:60vh;overflow:auto">${esc(x.draft.content)}</pre></details></div>` : ""}
