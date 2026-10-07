@@ -129,6 +129,7 @@ td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
 td small{display:block;color:var(--t3);font-size:11.5px}
 .cov-reported{background:var(--gb);color:var(--g)} .cov-awaiting_decision{background:var(--ab);color:var(--am)}
 .cov-write_requested{background:var(--pb);color:var(--p)} .cov-logged_only{background:var(--b2);color:var(--t2)} .cov-excluded{background:var(--rb);color:var(--r)}
+.addf{border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:14px;background:var(--sf)} .addf h2{font-size:14px;margin:0 0 10px} .addf .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px} .addf label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:600;color:var(--t2)} .addf input,.addf select{border:1px solid var(--b);border-radius:8px;padding:7px 9px;background:var(--bg);color:var(--t);font:inherit;font-weight:400;min-width:0} .addf .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px} .addf .hint{font-size:11.5px;color:var(--t2)}
 .rm{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px} .rm input{flex:1;min-width:150px;border:1px solid var(--b);border-radius:8px;padding:6px 9px;background:var(--bg)}
 .people{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:22px}
 .person{background:var(--sf);border-radius:10px;box-shadow:var(--sh);padding:12px;display:flex;gap:10px;align-items:center}
@@ -353,6 +354,7 @@ const liveApi = {
   excludeDeal: (id, reason) => liveApi.rpc("exclude_deal", { p_deal: id, p_reason: reason || null }),
   restoreDeal: id => liveApi.rpc("restore_deal", { p_deal: id }),
   claimDeal: id => liveApi.rpc("claim_deal", { p_deal: id }),
+  addDeal: f => liveApi.rpc("add_deal", { p_target: f.target, p_bidder: f.bidder || null, p_seller: f.seller || null, p_country: f.country, p_public: f.kind === "public", p_value: f.value === "" || f.value == null ? null : Number(f.value), p_currency: f.currency || null, p_date: f.date || null, p_url: f.url || null, p_action: f.action }),
   writeNow: id => liveApi.rpc("write_now", { p_deal: id }),
   setDealOwner: (id, m) => liveApi.rpc("set_deal_owner", { p_deal: id, p_member: m }),
   comment: (id, b) => liveApi.rpc("add_comment", { p_card: id, p_body: b }),
@@ -429,6 +431,7 @@ const demo = (() => {
     async requestReport(id) { deals[id].coverage_status = "write_requested"; },
     async excludeDeal(id, reason) { deals[id].coverage_status = "excluded"; deals[id].reason_not_covered = reason || "Removed: does not belong on the list"; cards.forEach(c => { if (c.deal_id === id && c.type === "decision" && c.status === "open") { c.status = "done"; c.decision = "skip"; } }); },
     async writeNow(id) { deals[id].coverage_status = "write_requested"; deals[id].urgent_at = new Date().toISOString(); },
+    async addDeal(f) { const id = "n" + Date.now(); deals[id] = { id, target: f.target.toUpperCase(), bidder: (f.bidder || "").toUpperCase(), seller: f.seller, target_country: f.country, region: "uk_ie", is_public: f.kind === "public", coverage_status: f.action === "log" ? "logged_only" : f.action === "mine" ? "reported" : "write_requested", urgent_at: f.action === "now" ? new Date().toISOString() : null, writing_note: f.action === "mine" ? "Being written by " + S.me.name + " (not by the report writer)" : null, owner_id: f.action === "mine" ? me() : null, value: f.value === "" ? null : Number(f.value), currency: f.currency, value_eur: f.currency === "EUR" && f.value !== "" ? Number(f.value) : null, date_found: new Date().toISOString().slice(0, 10), date_announced: f.date, source_url: f.url }; },
     async claimDeal(id) { deals[id].coverage_status = "reported"; deals[id].owner_id = me(); deals[id].writing_note = "Being written by " + S.me.name + " (not by the report writer)"; },
     async restoreDeal(id) { deals[id].coverage_status = "logged_only"; deals[id].reason_not_covered = "Restored to the list"; },
     async setDealOwner(id, m) { deals[id].owner_id = m; },
@@ -544,13 +547,31 @@ function viewPending() {
     <td class="r">${openFor(d.id) || ""}</td></tr>`).join("")}</tbody></table></div>`
   : `<div class="empty"><b>No pending deals loaded yet</b>They appear once the pending-deals export and PDFs have been loaded from Phil's PC.</div>`}`;
 }
+const COUNTRIES = "United Kingdom|Ireland|France|Italy|Germany|Spain|Netherlands|Belgium|Luxembourg|Switzerland|Austria|Portugal|Sweden|Norway|Denmark|Finland|Iceland|Greece|Poland|Czech Republic|Hungary|Romania|Bulgaria|Croatia|Slovenia|Slovakia|Estonia|Latvia|Lithuania|Cyprus|Malta|Serbia|Turkey|Ukraine|Jersey|Guernsey|Isle of Man|Gibraltar|Liechtenstein|Monaco|United States|Canada|Australia|Japan|India|China".split("|");
+const AF0 = () => ({ target: "", bidder: "", seller: "", country: "", kind: "private", value: "", currency: "EUR", date: "", url: "", action: "queue" });
+function addForm() {
+  const f = S.af || (S.af = AF0()), v = k => esc(f[k] || ""), o = (k, val, l) => `<option value="${val}"${f[k] === val ? " selected" : ""}>${l}</option>`;
+  return `<form class="addf" id="addf"><h2>Add a deal the daily run did not find</h2><div class="g">
+    <label>Target<input data-af="target" value="${v("target")}" required placeholder="Company or business being bought"></label>
+    <label>Bidder<input data-af="bidder" value="${v("bidder")}" placeholder="Ultimate buyer"></label>
+    <label>Seller (if any)<input data-af="seller" value="${v("seller")}"></label>
+    <label>Target's country<input data-af="country" value="${v("country")}" list="aflist" required placeholder="e.g. United Kingdom"><datalist id="aflist">${COUNTRIES.map(c => `<option value="${c}">`).join("")}</datalist></label>
+    <label>Type<select data-af="kind">${o("kind", "private", "Private / divestiture")}${o("kind", "public", "Public offer (listed target)")}</select></label>
+    <label>Value (millions)<input data-af="value" value="${v("value")}" type="number" step="any" min="0" placeholder="Leave blank if not disclosed"></label>
+    <label>Currency<input data-af="currency" value="${v("currency")}" maxlength="3" placeholder="EUR, GBP, USD"></label>
+    <label>Date announced<input data-af="date" value="${v("date")}" type="date"></label>
+    <label style="grid-column:1/-1">Link to the announcement<input data-af="url" value="${v("url")}" type="url" placeholder="https://"></label>
+    <label style="grid-column:1/-1">What should happen<select data-af="action">${o("action", "queue", "Queue it for the report writer")}${o("action", "now", "Write now - the report writer takes it next")}${o("action", "mine", "I'll write it myself")}${o("action", "log", "Just log it - no report")}</select></label></div>
+    <div class="row"><button class="btn pri" type="submit">Add deal</button><button class="btn" type="button" data-addcancel>Cancel</button><span class="hint">Names are stored in capitals. A country not on the list is treated as outside Europe.</span></div></form>`;
+}
 function viewFound() {
   const q = S.q.toLowerCase(), f = S.status;
   let ds = Object.values(S.deals).filter(d => !q || (dealLine(d) + " " + (d.seller || "") + " " + (d.sector || "")).toLowerCase().includes(q));
   const counts = k => ds.filter(d => d.coverage_status === k).length;
   const all = ds.filter(d => d.coverage_status !== "excluded"); ds = COVERAGE[f] ? ds.filter(d => d.coverage_status === f) : all;
   ds.sort((a, b) => (b.date_found || "").localeCompare(a.date_found || "") || (b.value_eur || 0) - (a.value_eur || 0));
-  return `<div class="top"><div><div class="eyebrow">DIANA · All deals found</div><h1>All deals found</h1><p>Everything with a European element the daily run has found, whether or not it was written up. Deals with no value or under EUR 10m are logged here in case coverage expands.</p></div></div>
+  return `<div class="top"><div><div class="eyebrow">DIANA · All deals found</div><h1>All deals found</h1><p>Everything with a European element the daily run has found, whether or not it was written up. Deals with no value or under EUR 10m are logged here in case coverage expands.</p></div><span class="sp"></span>${canEdit() && !S.adding ? `<button class="btn pri" data-addopen>Add a deal</button>` : ""}</div>
+  ${canEdit() && S.adding ? addForm() : ""}
   <div class="filters"><button class="chip" data-status="everything" aria-pressed="${!COVERAGE[f]}">All <small>${all.length}</small></button>${Object.entries(COVERAGE).map(([k, l]) => `<button class="chip" data-status="${k}" aria-pressed="${f === k}">${l} <small>${counts(k)}</small></button>`).join("")}
     <input type="search" id="q" placeholder="Filter by company, seller or sector" value="${esc(S.q)}" aria-label="Filter deals"></div>
   ${ds.length ? `<div class="tw"><table><thead><tr><th>Found</th><th>Target</th><th>Bidder / seller</th><th>Type</th><th class="r">Value</th><th>Coverage</th><th></th></tr></thead><tbody>${ds.slice(0, 500).map(d => `<tr>
@@ -656,6 +677,8 @@ document.addEventListener("click", async e => {
   if (el("[data-close]")) return closeCard();
   if ((t = el("[data-write]"))) return act(() => api.requestReport(t.dataset.write), "Queued. The next run will write the report.");
   if ((t = el("[data-now]"))) return act(() => api.writeNow(t.dataset.now), "Marked urgent. The report writer takes it on its next run.");
+  if (el("[data-addopen]")) { S.adding = true; S.af = AF0(); render(); const i = document.querySelector('[data-af="target"]'); if (i) i.focus(); return; }
+  if (el("[data-addcancel]")) { S.adding = false; S.af = null; return render(); }
   if ((t = el("[data-claim]"))) return act(() => api.claimDeal(t.dataset.claim), "It's yours. The report writer will leave it alone.");
   if ((t = el("[data-rm]"))) { S.removing = t.dataset.rm; render(); const i = $("#rmreason"); if (i) i.focus(); return; }
   if (el("[data-rmcancel]")) { S.removing = null; return render(); }
@@ -679,13 +702,19 @@ document.addEventListener("change", e => {
   if (e.target.dataset.owner) return act(() => api.setDealOwner(e.target.dataset.owner, e.target.value || null), "Responsible person updated");
   if (e.target.id === "viewas") { S.me = S.team.find(m => m.id === e.target.value); S.person = "all"; render(); }
 });
-document.addEventListener("input", e => { if (e.target.id === "q") { S.q = e.target.value; render(); } });
+document.addEventListener("input", e => { if (e.target.id === "q") { S.q = e.target.value; render(); } if (e.target.dataset && e.target.dataset.af && S.af) S.af[e.target.dataset.af] = e.target.value; });
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "rmreason") { e.preventDefault(); const b = document.querySelector("[data-rmgo]"); if (b) b.click(); } });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && S.sel) return closeCard();
   if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-card],[data-tick]")) { e.preventDefault(); e.target.click(); }
 });
 document.addEventListener("submit", async e => {
+  if (e.target.id === "addf") {
+    e.preventDefault(); const f = { ...S.af }; ["target", "bidder", "seller", "country", "currency", "url"].forEach(k => f[k] = (f[k] || "").trim());
+    if (!f.target || !f.country) return toast("Enter the target and its country.", true);
+    try { await api.addDeal(f); S.adding = false; S.af = null; S.q = ""; toast({ queue: "Added and queued for the report writer.", now: "Added. The report writer takes it on its next run.", mine: "Added in your name.", log: "Added to the list." }[f.action]); await reload(true); } catch (err) { toast(errMsg(err), true); }
+    return;
+  }
   if (e.target.id !== "login") return; e.preventDefault();
   const email = $("#lemail").value.trim().toLowerCase();
   S.authMsg = { text: "Sending…" }; render();
