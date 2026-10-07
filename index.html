@@ -130,6 +130,7 @@ td small{display:block;color:var(--t3);font-size:11.5px}
 .cov-reported{background:var(--gb);color:var(--g)} .cov-awaiting_decision{background:var(--ab);color:var(--am)}
 .cov-write_requested{background:var(--pb);color:var(--p)} .cov-logged_only{background:var(--b2);color:var(--t2)} .cov-excluded{background:var(--rb);color:var(--r)}
 .addf{border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:14px;background:var(--sf)} .addf h2{font-size:14px;margin:0 0 10px} .addf .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px} .addf label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:600;color:var(--t2)} .addf input,.addf select{border:1px solid var(--b);border-radius:8px;padding:7px 9px;background:var(--bg);color:var(--t);font:inherit;font-weight:400;min-width:0} .addf .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px} .addf .hint{font-size:11.5px;color:var(--t2)}
+.asg{max-width:112px;cursor:pointer} .qn{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:14px;background:var(--pb);color:var(--p);font-weight:700;font-size:13px} tr.next .qn{background:var(--a);color:var(--on-a)} tr.next td{background:color-mix(in srgb,var(--a) 6%,transparent)} h2.sec{font-size:15px;margin:22px 0 10px}
 .rm{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px} .rm input{flex:1;min-width:150px;border:1px solid var(--b);border-radius:8px;padding:6px 9px;background:var(--bg)}
 .people{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:22px}
 .person{background:var(--sf);border-radius:10px;box-shadow:var(--sh);padding:12px;display:flex;gap:10px;align-items:center}
@@ -286,7 +287,7 @@ const STATUS = { open: "Open", done: "Done", verified: "Verified", stuck: "Stuck
 const COVERAGE = { reported: "Reported", awaiting_decision: "Awaiting decision", write_requested: "Report queued", logged_only: "Logged only", excluded: "Removed" };
 const REGIONS = { uk_ie: "UK / Ireland", fr_it: "France / Italy", western: "Western Europe", other_europe: "Central / Eastern Europe", non_europe: "Outside Europe" };
 const KINDS = { draft: "Draft report", announcement: "Announcement", export: "Database PDF export", workbook: "Source workbook", other: "Other" };
-const TABS = [["mywork", "My work"], ["all", "All cards"], ["tocheck", "To check"], ["pending", "Pending deals"], ["found", "All deals found"], ["team", "Team"]];
+const TABS = [["mywork", "My work"], ["queue", "Report queue"], ["all", "All cards"], ["tocheck", "To check"], ["pending", "Pending deals"], ["found", "All deals found"], ["team", "Team"]];
 
 const S = { me: null, team: [], cards: [], deals: {}, absences: [], rules: [], tab: "mywork", person: "all", status: "active", q: "", sel: null, detail: null, authMsg: null, loading: true };
 let sb = null;
@@ -313,7 +314,7 @@ const errMsg = e => (e && (e.message || e.error_description)) || "Something went
 const liveApi = {
   async load() {
     const t = today(), since = new Date(Date.now() - 14 * 864e5).toISOString(), d60 = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10);
-    const dcols = "id,deal_number,temp_id,target,bidder,seller,target_country,region,is_public,sector,deal_type,deal_status,is_pending,admin_state,coverage_status,reason_not_covered,value,currency,value_eur,fx_rate,fx_date,date_announced,date_found,source_url,owner_id,exported_at,export_path,writing_note,urgent_at";
+    const dcols = "id,deal_number,temp_id,target,bidder,seller,target_country,region,is_public,sector,deal_type,deal_status,is_pending,admin_state,coverage_status,reason_not_covered,value,currency,value_eur,fx_rate,fx_date,date_announced,date_found,source_url,owner_id,exported_at,export_path,writing_note,urgent_at,writing_started_at,review_due,last_reviewed,review_note";
     const [team, abs, rules, cards, deals] = await Promise.all([
       sb.from("team_members").select("*").eq("active", true).order("name"),
       sb.from("absences").select("*").gte("end_date", t).order("start_date"),
@@ -354,6 +355,7 @@ const liveApi = {
   excludeDeal: (id, reason) => liveApi.rpc("exclude_deal", { p_deal: id, p_reason: reason || null }),
   restoreDeal: id => liveApi.rpc("restore_deal", { p_deal: id }),
   claimDeal: id => liveApi.rpc("claim_deal", { p_deal: id }),
+  assignDeal: (id, m) => liveApi.rpc("assign_deal", { p_deal: id, p_member: m }),
   addDeal: f => liveApi.rpc("add_deal", { p_target: f.target, p_bidder: f.bidder || null, p_seller: f.seller || null, p_country: f.country, p_public: f.kind === "public", p_value: f.value === "" || f.value == null ? null : Number(f.value), p_currency: f.currency || null, p_date: f.date || null, p_url: f.url || null, p_action: f.action }),
   writeNow: id => liveApi.rpc("write_now", { p_deal: id }),
   setDealOwner: (id, m) => liveApi.rpc("set_deal_owner", { p_deal: id, p_member: m }),
@@ -432,6 +434,7 @@ const demo = (() => {
     async excludeDeal(id, reason) { deals[id].coverage_status = "excluded"; deals[id].reason_not_covered = reason || "Removed: does not belong on the list"; cards.forEach(c => { if (c.deal_id === id && c.type === "decision" && c.status === "open") { c.status = "done"; c.decision = "skip"; } }); },
     async writeNow(id) { deals[id].coverage_status = "write_requested"; deals[id].urgent_at = new Date().toISOString(); },
     async addDeal(f) { const id = "n" + Date.now(); deals[id] = { id, target: f.target.toUpperCase(), bidder: (f.bidder || "").toUpperCase(), seller: f.seller, target_country: f.country, region: "uk_ie", is_public: f.kind === "public", coverage_status: f.action === "log" ? "logged_only" : f.action === "mine" ? "reported" : "write_requested", urgent_at: f.action === "now" ? new Date().toISOString() : null, writing_note: f.action === "mine" ? "Being written by " + S.me.name + " (not by the report writer)" : null, owner_id: f.action === "mine" ? me() : null, value: f.value === "" ? null : Number(f.value), currency: f.currency, value_eur: f.currency === "EUR" && f.value !== "" ? Number(f.value) : null, date_found: new Date().toISOString().slice(0, 10), date_announced: f.date, source_url: f.url }; },
+    async assignDeal(id, m) { const d = deals[id]; if (!m) { d.coverage_status = "write_requested"; d.owner_id = null; d.writing_note = null; } else { d.coverage_status = "reported"; d.owner_id = m; d.urgent_at = null; d.writing_note = "Being written by " + team.find(x => x.id === m).name + " (not by the report writer)"; } },
     async claimDeal(id) { deals[id].coverage_status = "reported"; deals[id].owner_id = me(); deals[id].writing_note = "Being written by " + S.me.name + " (not by the report writer)"; },
     async restoreDeal(id) { deals[id].coverage_status = "logged_only"; deals[id].reason_not_covered = "Restored to the list"; },
     async setDealOwner(id, m) { deals[id].owner_id = m; },
@@ -538,16 +541,18 @@ function viewPending() {
   const openFor = id => S.cards.filter(c => c.deal_id === id && activeOnly(c)).length;
   return `<div class="top"><div><div class="eyebrow">DIANA · Pending deals</div><h1>Pending deals</h1><p>Every deal still in progress, with the person responsible and when its database PDF was last uploaded here.</p></div><span class="sp"></span><div class="stats"><div class="stat"><b>${ds.length}</b><span>Pending</span></div><div class="stat${ds.some(d => d.deal_number && !d.exported_at) ? " warn" : ""}"><b>${ds.filter(d => d.deal_number && !d.exported_at).length}</b><span>No export yet</span></div></div></div>
   <div class="filters"><input type="search" id="q" placeholder="Filter by company or deal number" value="${esc(S.q)}" aria-label="Filter deals"></div>
-  ${ds.length ? `<div class="tw"><table><thead><tr><th>Deal</th><th>Type</th><th>Status</th><th>Responsible</th><th>Last export</th><th class="r">Open cards</th></tr></thead><tbody>${ds.map(d => `<tr>
+  ${ds.length ? `<div class="tw"><table><thead><tr><th>Deal</th><th>Type</th><th>Status</th><th>Responsible</th><th>Next review</th><th>Last export</th><th class="r">Open cards</th></tr></thead><tbody>${ds.map(d => `<tr>
     <td><b>${esc(d.target)}</b><small>${esc([d.deal_number ? "#" + d.deal_number : "No number yet", d.bidder, d.target_country].filter(Boolean).join(" · "))}</small></td>
     <td>${d.is_public ? "Public" : esc(d.deal_type || "Private")}<small>${esc(REGIONS[d.region] || "")}</small></td>
     <td>${esc(d.deal_status || "")}<small>${esc(d.admin_state || "Not uploaded")}</small></td>
     <td>${ownerCell(d)}</td>
+    <td>${d.review_due ? `<span${d.review_due <= today() ? ' style="color:var(--r);font-weight:600"' : ""}>${esc(fmtD(d.review_due))}</span>` : "–"}<small>${esc(d.review_note || (d.last_reviewed ? "Last looked " + fmtD(d.last_reviewed) : ""))}</small></td>
     <td>${d.exported_at ? esc(fmtD(d.exported_at)) : `<span style="color:var(--r);font-weight:600">${d.deal_number ? "Needed" : "–"}</span>`}</td>
     <td class="r">${openFor(d.id) || ""}</td></tr>`).join("")}</tbody></table></div>`
   : `<div class="empty"><b>No pending deals loaded yet</b>They appear once the pending-deals export and PDFs have been loaded from Phil's PC.</div>`}`;
 }
 const COUNTRIES = "United Kingdom|Ireland|France|Italy|Germany|Spain|Netherlands|Belgium|Luxembourg|Switzerland|Austria|Portugal|Sweden|Norway|Denmark|Finland|Iceland|Greece|Poland|Czech Republic|Hungary|Romania|Bulgaria|Croatia|Slovenia|Slovakia|Estonia|Latvia|Lithuania|Cyprus|Malta|Serbia|Turkey|Ukraine|Jersey|Guernsey|Isle of Man|Gibraltar|Liechtenstein|Monaco|United States|Canada|Australia|Japan|India|China".split("|");
+const dealActions = d => `${canEdit() && (d.coverage_status === "logged_only" || d.coverage_status === "awaiting_decision") ? `<button class="btn sm" data-write="${esc(d.id)}">Write report</button>` : ""}${canEdit() && !d.deal_number && ["write_requested","logged_only","awaiting_decision"].includes(d.coverage_status) && !(d.coverage_status === "write_requested" && d.urgent_at) ? ` <button class="btn sm" data-now="${esc(d.id)}" title="Urgent: the report writer takes this one next, ahead of the queue">Write now</button>` : ""}${canEdit() && !d.deal_number && (["write_requested","logged_only","awaiting_decision"].includes(d.coverage_status) || (d.coverage_status === "reported" && d.writing_note)) ? ` <select class="btn sm asg" data-assign="${esc(d.id)}" aria-label="Who writes this report" title="Give it to a person to write by hand (out of the report writer's queue), or back to the report writer"><option value="">${d.coverage_status === "reported" ? "Reassign…" : "Assign to…"}</option>${S.team.filter(m => m.role !== "viewer").map(m => `<option value="${esc(m.id)}"${d.coverage_status === "reported" && d.owner_id === m.id ? " disabled" : ""}>${esc(m.name)}${m.id === S.me.id ? " (me)" : ""}</option>`).join("")}${d.coverage_status === "reported" ? `<option value="writer">Report writer</option>` : ""}</select>` : ""}${canEdit() && !d.deal_number && d.coverage_status !== "reported" && d.coverage_status !== "excluded" ? (S.removing === d.id ? `<div class="rm"><input id="rmreason" placeholder="Why? e.g. not European" aria-label="Reason for removing"><button class="btn sm" data-rmgo="${esc(d.id)}">Remove</button><button class="btn sm" data-rmcancel>Cancel</button></div>` : ` <button class="btn sm" data-rm="${esc(d.id)}">Remove</button>`) : ""}${canEdit() && d.coverage_status === "excluded" ? `<button class="btn sm" data-restore="${esc(d.id)}">Put back</button>` : ""}`;
 const AF0 = () => ({ target: "", bidder: "", seller: "", country: "", kind: "private", value: "", currency: "EUR", date: "", url: "", action: "queue" });
 function addForm() {
   const f = S.af || (S.af = AF0()), v = k => esc(f[k] || ""), o = (k, val, l) => `<option value="${val}"${f[k] === val ? " selected" : ""}>${l}</option>`;
@@ -563,6 +568,33 @@ function addForm() {
     <label style="grid-column:1/-1">Link to the announcement<input data-af="url" value="${v("url")}" type="url" placeholder="https://"></label>
     <label style="grid-column:1/-1">What should happen<select data-af="action">${o("action", "queue", "Queue it for the report writer")}${o("action", "now", "Write now - the report writer takes it next")}${o("action", "mine", "I'll write it myself")}${o("action", "log", "Just log it - no report")}</select></label></div>
     <div class="row"><button class="btn pri" type="submit">Add deal</button><button class="btn" type="button" data-addcancel>Cancel</button><span class="hint">Names are stored in capitals. A country not on the list is treated as outside Europe.</span></div></form>`;
+}
+function queueOrder() {
+  const held = new Set(S.cards.filter(c => c.type === "document_needed" && (c.status === "open" || c.status === "stuck") && c.deal_id).map(c => c.deal_id));
+  const q = Object.values(S.deals).filter(d => d.coverage_status === "write_requested" && !d.deal_number);
+  const key = d => [held.has(d.id) ? 1 : 0, d.urgent_at ? 0 : 1, d.urgent_at || "", -(d.value_eur || 0), d.date_found || ""];
+  q.sort((a, b) => { const x = key(a), y = key(b); for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] < y[i] ? -1 : 1; return 0; });
+  return { q, held };
+}
+function viewQueue() {
+  const { q, held } = queueOrder(), ready = q.filter(d => !held.has(d.id)), urgent = q.filter(d => d.urgent_at).length;
+  const byHand = Object.values(S.deals).filter(d => d.coverage_status === "reported" && !d.deal_number && d.writing_note).sort((a, b) => (a.target || "").localeCompare(b.target || ""));
+  const val = d => `${d.value != null ? esc((d.currency || "") + " " + fmtN(d.value) + "m") : "Not disclosed"}${d.value_eur != null && d.currency !== "EUR" ? `<small>EUR ${fmtN(d.value_eur)}m</small>` : ""}`;
+  const name = d => `<b>${safeUrl(d.source_url) ? `<a href="${esc(d.source_url)}" target="_blank" rel="noopener">${esc(d.target)}</a>` : esc(d.target)}</b><small>${esc([d.target_country, d.is_public ? "Public" : (d.deal_type || "Private")].filter(Boolean).join(" · "))}</small>`;
+  const writing = d => d.writing_started_at && Date.now() - new Date(d.writing_started_at).getTime() < 4 * 36e5;
+  return `<div class="top"><div><div class="eyebrow">DIANA · Report queue</div><h1>Report queue</h1><p>Reports waiting to be written, in the order the report writer will take them: urgent ones first, then the largest. It writes one each hour at quarter to, 9am to 4pm on weekdays, and puts it on the admin site as a draft.</p></div><span class="sp"></span><div class="stats"><div class="stat${q.length ? " warn" : ""}"><b>${q.length}</b><span>Waiting</span></div><div class="stat"><b>${urgent}</b><span>Urgent</span></div><div class="stat"><b>${byHand.length}</b><span>With a person</span></div></div>${canEdit() && !S.adding ? `<button class="btn pri" data-addopen>Add a deal</button>` : ""}</div>
+  ${canEdit() && S.adding ? addForm() : ""}
+  ${q.length ? `<div class="tw"><table class="qt"><thead><tr><th>Order</th><th>Target</th><th>Bidder / seller</th><th class="r">Value</th><th>Note</th><th></th></tr></thead><tbody>${q.map(d => { const pos = ready.indexOf(d) + 1; return `<tr${pos === 1 ? ' class="next"' : ""}>
+    <td class="num">${held.has(d.id) ? `<span class="tag cov-logged_only">On hold</span>` : `<span class="qn">${pos}</span>${writing(d) ? `<small><b>Being written now</b></small>` : pos === 1 ? `<small><b>Next</b></small>` : ""}`}${d.urgent_at ? `<small><span class="tag cov-excluded">Urgent</span></small>` : ""}</td>
+    <td>${name(d)}</td>
+    <td>${esc(d.bidder || "")}<small>${d.seller ? "Seller: " + esc(d.seller) : ""}</small></td>
+    <td class="r">${val(d)}</td>
+    <td>${held.has(d.id) ? `<small>Waiting for a document or an answer - see the card</small>` : ""}${d.writing_note ? `<small>${esc(d.writing_note)}</small>` : ""}</td>
+    <td>${dealActions(d)}</td></tr>`; }).join("")}</tbody></table></div>`
+  : `<div class="empty"><b>Nothing waiting to be written</b>Deals arrive here from the daily run, from Write report on All deals found, or from Add a deal.</div>`}
+  ${byHand.length ? `<h2 class="sec">Being written by a person</h2><div class="tw"><table><thead><tr><th>Target</th><th>Bidder / seller</th><th class="r">Value</th><th>Who</th><th></th></tr></thead><tbody>${byHand.map(d => `<tr>
+    <td>${name(d)}</td><td>${esc(d.bidder || "")}<small>${d.seller ? "Seller: " + esc(d.seller) : ""}</small></td><td class="r">${val(d)}</td>
+    <td>${esc((S.team.find(m => m.id === d.owner_id) || {}).name || "")}</td><td>${dealActions(d)}</td></tr>`).join("")}</tbody></table></div>` : ""}`;
 }
 function viewFound() {
   const q = S.q.toLowerCase(), f = S.status;
@@ -581,7 +613,7 @@ function viewFound() {
     <td>${d.is_public ? "Public" : esc(d.deal_type || "Private")}</td>
     <td class="r">${d.value != null ? esc((d.currency || "") + " " + fmtN(d.value) + "m") : "Not disclosed"}${d.value_eur != null && d.currency !== "EUR" ? `<small>EUR ${fmtN(d.value_eur)}m</small>` : ""}</td>
     <td><span class="tag cov-${esc(d.coverage_status)}">${esc(COVERAGE[d.coverage_status])}</span>${d.reason_not_covered && d.coverage_status !== "reported" ? `<small>${esc(d.reason_not_covered)}</small>` : ""}${d.urgent_at && d.coverage_status === "write_requested" ? `<small><b>Urgent: next to be written</b></small>` : ""}${d.writing_note && !d.deal_number ? `<small>${esc(d.writing_note)}</small>` : ""}</td>
-    <td>${canEdit() && (d.coverage_status === "logged_only" || d.coverage_status === "awaiting_decision") ? `<button class="btn sm" data-write="${esc(d.id)}">Write report</button>` : ""}${canEdit() && !d.deal_number && ["write_requested","logged_only","awaiting_decision"].includes(d.coverage_status) && !(d.coverage_status === "write_requested" && d.urgent_at) ? ` <button class="btn sm" data-now="${esc(d.id)}" title="Urgent: the report writer takes this one next, ahead of the queue">Write now</button>` : ""}${canEdit() && ["write_requested","logged_only","awaiting_decision"].includes(d.coverage_status) ? ` <button class="btn sm" data-claim="${esc(d.id)}" title="Takes it out of the report writer's queue and puts it in your name">I'll write it</button>` : ""}${canEdit() && !d.deal_number && d.coverage_status !== "reported" && d.coverage_status !== "excluded" ? (S.removing === d.id ? `<div class="rm"><input id="rmreason" placeholder="Why? e.g. not European" aria-label="Reason for removing"><button class="btn sm" data-rmgo="${esc(d.id)}">Remove</button><button class="btn sm" data-rmcancel>Cancel</button></div>` : ` <button class="btn sm" data-rm="${esc(d.id)}">Remove</button>`) : ""}${canEdit() && d.coverage_status === "excluded" ? `<button class="btn sm" data-restore="${esc(d.id)}">Put back</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`
+    <td>${dealActions(d)}</td></tr>`).join("")}</tbody></table></div>`
   : `<div class="empty"><b>Nothing logged yet</b>The first daily run fills this list.</div>`}`;
 }
 function viewTeam() {
@@ -650,8 +682,8 @@ function render() {
   const keep = document.activeElement && document.activeElement.id === "q" ? document.activeElement.selectionStart : null;
   const myOpen = S.cards.filter(c => c.assignee_id === S.me.id && activeOnly(c)).length;
   const queue = S.cards.filter(c => c.type === "report_check" && !c.owner_id && c.status === "open").length;
-  const badge = { mywork: myOpen, tocheck: queue, all: S.cards.filter(activeOnly).length };
-  const view = { mywork: viewMyWork, all: viewAll, tocheck: viewToCheck, pending: viewPending, found: viewFound, team: viewTeam }[S.tab]();
+  const badge = { mywork: myOpen, tocheck: queue, all: S.cards.filter(activeOnly).length, queue: Object.values(S.deals).filter(d => d.coverage_status === "write_requested" && !d.deal_number).length };
+  const view = { mywork: viewMyWork, all: viewAll, tocheck: viewToCheck, pending: viewPending, found: viewFound, queue: viewQueue, team: viewTeam }[S.tab]();
   app.innerHTML = `${LIVE ? "" : `<div class="demo" role="note"><b>Example data</b><span>These companies and cards are made up to show how DIANA works. View it as:</span><select id="viewas" aria-label="View as" style="background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:2px 6px">${S.team.map(m => `<option value="${esc(m.id)}"${m.id === S.me.id ? " selected" : ""}>${esc(m.name)}</option>`).join("")}</select></div>`}
   <header class="hdr"><div class="wrap"><div class="brand"><img class="co" src="${LOGO.co}" alt="M&amp;A Monitor"><span class="cn">M&amp;A Monitor</span><span class="dv"></span><span class="dm"><img src="${LOGO.head}" alt=""></span><span class="dn"><b>DIANA</b><small>Deal ID and Notification App</small></span></div>
     <nav class="tabs" role="tablist">${TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${l}${badge[k] ? ` <b>${badge[k]}</b>` : ""}</button>`).join("")}</nav>
@@ -699,6 +731,7 @@ document.addEventListener("click", async e => {
 });
 document.addEventListener("change", e => {
   if (e.target.id === "ffile" && e.target.files[0] && S.sel) { const f = e.target.files[0], kind = $("#fkind").value, id = S.sel; if (f.size > 50 * 1024 * 1024) return toast("That file is over 50 MB.", true); toast("Uploading " + f.name + "…"); return act(() => api.attach(id, f, kind), "Attached " + f.name); }
+  if (e.target.dataset.assign && e.target.value) { const v = e.target.value, m = v === "writer" ? null : v, who = m ? S.team.find(x => x.id === m).name : null; return act(() => api.assignDeal(e.target.dataset.assign, m), who ? "Assigned to " + who + ". The report writer will leave it alone." : "Back in the report writer's queue."); }
   if (e.target.dataset.owner) return act(() => api.setDealOwner(e.target.dataset.owner, e.target.value || null), "Responsible person updated");
   if (e.target.id === "viewas") { S.me = S.team.find(m => m.id === e.target.value); S.person = "all"; render(); }
 });
