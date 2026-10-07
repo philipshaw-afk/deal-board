@@ -346,12 +346,27 @@ const liveApi = {
   requestReport: id => liveApi.rpc("request_report", { p_deal: id }),
   setDealOwner: (id, m) => liveApi.rpc("set_deal_owner", { p_deal: id, p_member: m }),
   comment: (id, b) => liveApi.rpc("add_comment", { p_card: id, p_body: b }),
+  async pdfText(file) {
+    // read the PDF's text in the browser so DIANA can check the report after upload
+    try {
+      if (!window.pdfjsLib) await new Promise((ok, no) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
+      pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+      const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise; const out = [];
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const tc = await (await pdf.getPage(p)).getTextContent(); let line = "", y = null;
+        for (const it of tc.items) { const iy = Math.round(it.transform[5]); if (y !== null && Math.abs(iy - y) > 2) { out.push(line.trimEnd()); line = ""; } line += it.str + (it.hasEOL ? "" : " "); y = iy; }
+        out.push(line.trimEnd());
+      }
+      return out.join("\n").replace(/[ \t]+/g, " ").slice(0, 400000);
+    } catch (e) { return null; }
+  },
   async attach(id, file, kind) {
     const clean = file.name.replace(/[^A-Za-z0-9._ ()-]/g, "_");
     const path = `cards/${id}/${Date.now()}-${clean}`;
     const up = await sb.storage.from(BUCKET).upload(path, file, { contentType: file.type || "application/octet-stream" });
     if (up.error) throw up.error;
-    await liveApi.rpc("attach_file", { p_card: id, p_path: path, p_name: file.name, p_kind: kind });
+    const text = kind === "export" && /\.pdf$/i.test(file.name) ? await liveApi.pdfText(file) : null;
+    await liveApi.rpc("attach_file", { p_card: id, p_path: path, p_name: file.name, p_kind: kind, p_text: text });
   }
 };
 
@@ -566,10 +581,10 @@ function drawerHtml() {
     <div class="db">
       <div class="meta"><span class="tag" style="color:var(--${T.c})">${esc(T.l)}</span><span class="pill ${c.status}" style="padding-inline:8px">${STATUS[c.status]}</span>${avatar(c.assignee_id, c.owner_id)}<span>${esc((member(c.assignee_id) || { name: "To check queue" }).name)}${c.owner_id && c.owner_id !== c.assignee_id ? `, covering for ${esc((member(c.owner_id) || {}).name)}` : ""}</span><span style="color:var(--t3)">Due ${esc(fmtD(c.due_date))}</span></div>
       ${acts}
-      ${wantsExport && activeOnly(c) ? `<div class="ask">When you've made the change, attach the fresh PDF export below so the next run can verify it.</div>` : ""}
+      ${wantsExport && activeOnly(c) ? `<div class="ask">When you've made the change, attach the fresh PDF export below. DIANA reads it and checks the update went in correctly.</div>` : ""}
       ${c.detail || T.h || src ? `<div class="sec"><h4>What happened</h4>${c.detail ? `<p>${esc(c.detail)}</p>` : T.h ? `<p>${esc(T.h)}</p>` : ""}${src ? `<p style="margin-top:6px"><a href="${esc(src)}" target="_blank" rel="noopener">Open the source ↗</a></p>` : ""}</div>` : ""}
       ${c.decision ? `<div class="sec"><h4>Decision</h4><p>${c.decision === "write" ? "Write it" : "Skip"}${c.decision_note ? " · " + esc(c.decision_note) : ""}</p></div>` : ""}
-      ${c.verify_note ? `<div class="sec"><h4>Verification</h4><p>${esc(c.verify_note)}</p></div>` : ""}
+      ${c.verify_note ? `<div class="sec"><h4>DIANA's check of the uploaded report</h4><p${c.status === "verified" ? "" : ' class="ask" style="background:var(--rb);color:var(--r)"'}>${esc(c.verify_note)}</p></div>` : ""}
       ${metaRows ? `<div class="sec"><h4>Figures</h4><dl class="kv">${metaRows}</dl></div>` : ""}
       ${c.qa_flags && c.qa_flags.length ? `<div class="sec"><h4>QA flags</h4><ul class="qa">${c.qa_flags.map(f => `<li>${esc(typeof f === "string" ? f : JSON.stringify(f))}</li>`).join("")}</ul></div>` : ""}
       ${d ? `<div class="sec"><h4>Deal</h4><dl class="kv"><dt>Number</dt><dd>${esc(d.deal_number || "Not yet assigned")}</dd><dt>Target</dt><dd>${esc(d.target)}${d.target_country ? " (" + esc(d.target_country) + ")" : ""}</dd>${d.bidder ? `<dt>Bidder</dt><dd>${esc(d.bidder)}</dd>` : ""}${d.seller ? `<dt>Seller</dt><dd>${esc(d.seller)}</dd>` : ""}<dt>Type</dt><dd>${d.is_public ? "Public" : esc(d.deal_type || "Private")} · ${esc(REGIONS[d.region] || "Region not set")}</dd>${d.value != null ? `<dt>Value</dt><dd>${esc((d.currency || "") + " " + fmtN(d.value) + "m")}</dd>` : ""}<dt>Last export</dt><dd>${d.exported_at ? esc(fmtDT(d.exported_at)) : "None yet"}</dd></dl></div>` : ""}
