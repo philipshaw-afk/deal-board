@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>M&amp;A Monitor Deal Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: sticky header + tab bar, grouped work lists down one column, card detail in a right-hand drawer. Tokens follow the integrated site mockup. */
+:root{
+  --bg:#F5F7FB; --sf:#FFFFFF; --sf2:#F0F3F9; --t:#0F1729; --t2:#4A5568; --t3:#75839B;
+  --b:rgba(15,23,41,.10); --b2:rgba(15,23,41,.06);
+  --a:#4F6EF7; --al:rgba(79,110,247,.10); --ah:#3B5AE0; --on-a:#FFFFFF;
+  --g:#0B8A5E; --gb:rgba(13,155,106,.12);
+  --am:#9A6C00; --ab:rgba(176,125,0,.14);
+  --r:#C93516; --rb:rgba(220,62,27,.11);
+  --p:#6B4AE8; --pb:rgba(124,92,252,.12);
+  --tl:#0D7490; --tb:rgba(13,116,144,.12);
+  --in:#4338CA; --ib:rgba(67,56,202,.10);
+  --sh:0 1px 3px rgba(0,0,0,.05),0 0 0 1px rgba(0,0,0,.03); --sm:0 12px 40px rgba(15,23,41,.16);
+  --hdr:rgba(255,255,255,.86); --scrim:rgba(15,23,41,.32);
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --sans:Inter,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --pad:clamp(16px,3vw,32px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0D1220; --sf:#151C2E; --sf2:#1B243A; --t:#E8ECF5; --t2:#AAB4C8; --t3:#7F8BA3;
+  --b:rgba(255,255,255,.12); --b2:rgba(255,255,255,.07);
+  --a:#7F97FF; --al:rgba(127,151,255,.16); --ah:#9DB0FF; --on-a:#0D1220;
+  --g:#3CCB97; --gb:rgba(60,203,151,.16); --am:#E5B542; --ab:rgba(229,181,66,.16);
+  --r:#FF7A5C; --rb:rgba(255,122,92,.16); --p:#A891FF; --pb:rgba(168,145,255,.16);
+  --tl:#4FC3DD; --tb:rgba(79,195,221,.15); --in:#9A93FF; --ib:rgba(154,147,255,.15);
+  --sh:0 0 0 1px rgba(255,255,255,.07); --sm:0 12px 40px rgba(0,0,0,.5);
+  --hdr:rgba(21,28,46,.9); --scrim:rgba(0,0,0,.55); color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0D1220; --sf:#151C2E; --sf2:#1B243A; --t:#E8ECF5; --t2:#AAB4C8; --t3:#7F8BA3;
+  --b:rgba(255,255,255,.12); --b2:rgba(255,255,255,.07);
+  --a:#7F97FF; --al:rgba(127,151,255,.16); --ah:#9DB0FF; --on-a:#0D1220;
+  --g:#3CCB97; --gb:rgba(60,203,151,.16); --am:#E5B542; --ab:rgba(229,181,66,.16);
+  --r:#FF7A5C; --rb:rgba(255,122,92,.16); --p:#A891FF; --pb:rgba(168,145,255,.16);
+  --tl:#4FC3DD; --tb:rgba(79,195,221,.15); --in:#9A93FF; --ib:rgba(154,147,255,.15);
+  --sh:0 0 0 1px rgba(255,255,255,.07); --sm:0 12px 40px rgba(0,0,0,.5);
+  --hdr:rgba(21,28,46,.9); --scrim:rgba(0,0,0,.55); color-scheme:dark }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--t);font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;min-height:100vh}
+a{color:var(--a);text-decoration:none} a:hover{color:var(--ah);text-decoration:underline}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--a);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:var(--pad)}
+.num{font-variant-numeric:tabular-nums}
+
+.demo{background:var(--t);color:var(--bg);font-size:11.5px;padding:7px var(--pad);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.demo b{font:700 9.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;background:var(--a);color:var(--on-a);padding:3px 7px;border-radius:4px}
+.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--hdr);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--b)}
+.hdr .wrap{display:flex;align-items:center;gap:14px;min-height:54px;flex-wrap:wrap;padding-block:6px}
+.logo{font-weight:700;font-size:15px;letter-spacing:-.3px;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.logo i{font:700 10px/1 var(--mono);font-style:normal;background:var(--al);color:var(--a);padding:5px 6px;border-radius:5px}
+.tabs{display:flex;gap:2px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{background:none;border:0;color:var(--t2);font-size:12.5px;font-weight:500;padding:7px 10px;border-radius:8px;white-space:nowrap;display:flex;gap:6px;align-items:center}
+.tabs button:hover{background:var(--b2);color:var(--t)}
+.tabs button[aria-selected="true"]{color:var(--a);background:var(--al);box-shadow:inset 0 0 0 1px var(--al)}
+.tabs b{font:700 10px var(--mono);background:var(--b2);padding:1px 6px;border-radius:4px;color:var(--t2)}
+.tabs button[aria-selected="true"] b{background:var(--a);color:var(--on-a)}
+.user{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--t3);white-space:nowrap}
+.live{width:7px;height:7px;border-radius:50%;background:var(--g)}
+.av{width:26px;height:26px;border-radius:50%;background:var(--al);color:var(--a);display:inline-grid;place-items:center;font:700 10px/1 var(--mono);flex:none}
+.av.cov{box-shadow:0 0 0 2px var(--sf),0 0 0 3.5px var(--am)}
+.av.none{background:var(--b2);color:var(--t3)}
+.btn{border:1px solid var(--b);background:var(--sf);border-radius:8px;padding:6px 11px;font-weight:600;font-size:12px;color:var(--t2);white-space:nowrap}
+.btn:hover{color:var(--t);border-color:var(--t3)}
+.btn.pri{background:var(--a);border-color:var(--a);color:var(--on-a)} .btn.pri:hover{background:var(--ah);color:var(--on-a)}
+.btn.sm{padding:4px 8px;font-size:11.5px}
+.btn[disabled]{opacity:.5;cursor:default}
+
+main{padding-block:20px 60px}
+.top{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.top h1{font-size:20px;letter-spacing:-.4px;font-weight:700;text-wrap:balance}
+.top p{color:var(--t2);max-width:65ch}
+.top .sp{flex:1}
+.stats{display:flex;gap:18px;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;gap:1px}
+.stat b{font:700 18px var(--mono);font-variant-numeric:tabular-nums}
+.stat span{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:600}
+.stat.warn b{color:var(--r)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.chip{border:1px solid var(--b);background:var(--sf);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:500;color:var(--t2);display:inline-flex;gap:6px;align-items:center}
+.chip[aria-pressed="true"]{background:var(--al);border-color:var(--a);color:var(--a)}
+.chip small{font:700 10px var(--mono)}
+.filters input[type=search],.filters select{border:1px solid var(--b);background:var(--sf);border-radius:8px;padding:6px 10px;min-width:0;width:min(260px,100%)}
+.filters .sep{width:1px;height:18px;background:var(--b);margin-inline:4px}
+
+.grp{margin-bottom:18px}
+.grp h2{font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:6px;color:var(--gc,var(--t))}
+.grp h2 span{font:700 10px var(--mono);color:var(--t3)}
+.list{background:var(--sf);border-radius:10px;box-shadow:var(--sh);overflow:hidden;border-left:3px solid var(--gc,var(--b))}
+.row{display:grid;grid-template-columns:30px minmax(0,1fr) 150px 92px 34px 74px;gap:10px;align-items:center;padding:8px 12px 8px 8px;border-top:1px solid var(--b2);cursor:pointer;width:100%;text-align:left;background:none;border-inline:0;border-bottom:0}
+.row:first-child{border-top:0}
+.row:hover{background:var(--sf2)}
+.row.sel{background:var(--al)}
+.row .ti{min-width:0}
+.row .ti b{font-weight:600;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .ti small{color:var(--t3);font-size:11.5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row.fin .ti b{color:var(--t2);font-weight:500}
+.tick{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--t3);background:var(--sf);display:grid;place-items:center;color:transparent;font-size:13px;font-weight:700;line-height:1;padding:0}
+.tick:hover{border-color:var(--g);color:var(--g)}
+.tick.on{background:var(--g);border-color:var(--g);color:var(--sf)}
+.tick.ver{background:var(--a);border-color:var(--a);color:var(--on-a)}
+.tick.na{border-style:dashed;cursor:default}
+.tick.na:hover{border-color:var(--t3);color:transparent}
+.tag{font-size:11px;font-weight:600;padding:3px 8px;border-radius:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block;max-width:100%;background:var(--b2);color:var(--t2)}
+.pill{font:700 10px var(--mono);letter-spacing:.04em;text-transform:uppercase;padding:4px 0;border-radius:5px;text-align:center;display:block}
+.pill.open{background:var(--al);color:var(--a)} .pill.done{background:var(--gb);color:var(--g)}
+.pill.verified{background:var(--a);color:var(--on-a)} .pill.stuck{background:var(--rb);color:var(--r)}
+.due{font-size:11.5px;color:var(--t3);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.due.late{color:var(--r);font-weight:600}
+.empty{background:var(--sf);border:1px dashed var(--b);border-radius:10px;padding:28px 20px;text-align:center;color:var(--t2)}
+.empty b{display:block;color:var(--t);font-size:14px;margin-bottom:4px}
+
+.tw{background:var(--sf);border-radius:10px;box-shadow:var(--sh);overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:600;text-align:left;padding:9px 12px;border-bottom:1px solid var(--b);white-space:nowrap}
+td{padding:9px 12px;border-top:1px solid var(--b2);vertical-align:top}
+tr:first-child td{border-top:0}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+td small{display:block;color:var(--t3);font-size:11.5px}
+.cov-reported{background:var(--gb);color:var(--g)} .cov-awaiting_decision{background:var(--ab);color:var(--am)}
+.cov-write_requested{background:var(--pb);color:var(--p)} .cov-logged_only{background:var(--b2);color:var(--t2)}
+.people{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:22px}
+.person{background:var(--sf);border-radius:10px;box-shadow:var(--sh);padding:12px;display:flex;gap:10px;align-items:center}
+.person b{display:block} .person small{color:var(--t3)}
+.person.away{box-shadow:0 0 0 1.5px var(--am)}
+h3{font-size:13px;margin:0 0 8px}
+
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:30}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--sf);z-index:31;box-shadow:var(--sm);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.dh{padding:16px 18px 12px;border-bottom:1px solid var(--b);display:flex;gap:10px;align-items:flex-start}
+.dh h2{font-size:16px;letter-spacing:-.2px;flex:1;min-width:0;overflow-wrap:anywhere;text-wrap:balance}
+.dh .x{border:0;background:var(--b2);width:28px;height:28px;border-radius:8px;font-size:15px;color:var(--t2);flex:none}
+.db{overflow-y:auto;padding:14px 18px 24px;display:flex;flex-direction:column;gap:16px;flex:1}
+.meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sec>h4{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);font-weight:600;margin-bottom:6px}
+.sec p{overflow-wrap:anywhere;white-space:pre-wrap}
+.kv{display:grid;grid-template-columns:120px minmax(0,1fr);gap:4px 10px}
+.kv dt{color:var(--t3)} .kv dd{overflow-wrap:anywhere}
+.qa{list-style:none;display:flex;flex-direction:column;gap:5px}
+.qa li{background:var(--ab);color:var(--am);border-radius:6px;padding:6px 9px;font-weight:500}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.ask{background:var(--tb);color:var(--tl);border-radius:8px;padding:9px 11px;font-weight:500}
+.files{list-style:none;display:flex;flex-direction:column;gap:4px}
+.files li{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.files small,.log small{color:var(--t3)}
+.up{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.up select,.cm textarea,.dn textarea,.login input{border:1px solid var(--b);background:var(--bg);border-radius:8px;padding:7px 9px;min-width:0}
+.cm{display:flex;gap:6px;margin-top:8px} .cm textarea{flex:1;resize:vertical;min-height:36px}
+.log{list-style:none;display:flex;flex-direction:column;gap:7px}
+.log li{display:grid;grid-template-columns:26px minmax(0,1fr);gap:8px}
+.log p{white-space:pre-wrap;overflow-wrap:anywhere}
+.hist{list-style:none;color:var(--t2);font-size:12px;display:flex;flex-direction:column;gap:3px}
+.dn{display:flex;flex-direction:column;gap:8px} .dn textarea{width:100%;min-height:36px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--t);color:var(--bg);padding:9px 14px;border-radius:9px;font-weight:500;z-index:50;box-shadow:var(--sm);max-width:calc(100% - 32px)}
+.toast.err{background:var(--r);color:#fff}
+.login{max-width:400px;margin:9vh auto 0;background:var(--sf);border-radius:14px;box-shadow:var(--sh);padding:26px;display:flex;flex-direction:column;gap:12px}
+.login h1{font-size:19px;letter-spacing:-.3px} .login p{color:var(--t2)} .login input{width:100%;padding:9px 11px}
+.login label{font-weight:600;font-size:12px;display:flex;flex-direction:column;gap:5px}
+.login .msg{background:var(--al);color:var(--a);border-radius:8px;padding:9px 11px;font-weight:500}
+.login .msg.err{background:var(--rb);color:var(--r)}
+@media (max-width:760px){
+  .row{grid-template-columns:30px minmax(0,1fr) 78px 30px;row-gap:2px}
+  .row .tg,.row .due{display:none}
+  .row .ti b{white-space:normal}
+  .user .nm{display:none}
+}
+@media (prefers-reduced-motion:no-preference){ .drawer{animation:in .16s ease-out} @keyframes in{from{transform:translateX(24px);opacity:.6}to{transform:none;opacity:1}} }
+</style>
+
+</head>
+<body>
+<div id="app"></div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+"use strict";
+const CONFIG = { url: "https://awpbhcyhfgsznmrqiddv.supabase.co", key: "sb_publishable_wci9xM67qfl-jdIy7e9T2Q_fKALWRdF" };
+const LIVE = CONFIG.url.startsWith("https://");
+const BUCKET = "deal-files";
+
+const TYPES = {
+  decision:        { l: "Your decision",          c: "am", h: "Borderline deals. Choose Write it or Skip." },
+  document_needed: { l: "Document needed",        c: "r",  h: "The announcement could not be downloaded. Please save it and attach it here." },
+  new_offer:       { l: "New offer",              c: "r",  h: "New disclosure-table additions and new indicative or formal offers." },
+  update_report:   { l: "Update existing report", c: "a",  h: "Something changed on a deal already on the database." },
+  uk_tracker:      { l: "UK Tracker update",      c: "tl", h: "" },
+  eu_tracker:      { l: "European tracker update",c: "tl", h: "" },
+  report_check:    { l: "Report to check",        c: "p",  h: "" },
+  final_check:     { l: "Final check",            c: "in", h: "Reports already checked by Laure or Kit." },
+  export_upload:   { l: "Export and upload",      c: "g",  h: "The deal is LIVE. Export the PDF from the admin site and attach it." },
+  lei_confirm:     { l: "LEI to confirm",         c: "t2", h: "" }
+};
+const TYPE_ORDER = Object.keys(TYPES);
+const STATUS = { open: "Open", done: "Done", verified: "Verified", stuck: "Stuck" };
+const COVERAGE = { reported: "Reported", awaiting_decision: "Awaiting decision", write_requested: "Report queued", logged_only: "Logged only" };
+const REGIONS = { uk_ie: "UK / Ireland", fr_it: "France / Italy", western: "Western Europe", other_europe: "Central / Eastern Europe", non_europe: "Outside Europe" };
+const KINDS = { draft: "Draft report", announcement: "Announcement", export: "Database PDF export", workbook: "Source workbook", other: "Other" };
+const TABS = [["mywork", "My work"], ["all", "All cards"], ["tocheck", "To check"], ["pending", "Pending deals"], ["found", "All deals found"], ["team", "Team"]];
+
+const S = { me: null, team: [], cards: [], deals: {}, absences: [], rules: [], tab: "mywork", person: "all", status: "active", q: "", sel: null, detail: null, authMsg: null, loading: true };
+let sb = null;
+
+/* ---------- utilities ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : null;
+const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London" }).format(new Date());
+const fmtD = d => d ? new Date(d.length === 10 ? d + "T12:00:00Z" : d).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Europe/London" }) : "";
+const fmtDT = d => d ? new Date(d).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }) : "";
+const fmtN = n => n == null ? "" : Number(n).toLocaleString("en-GB", { maximumFractionDigits: 1 });
+const member = id => S.team.find(m => m.id === id);
+const isAway = id => S.absences.some(a => a.member_id === id && a.start_date <= today() && a.end_date >= today());
+const canEdit = () => S.me && S.me.role !== "viewer";
+function applyData(d) { Object.assign(S, d); S.everyone = d.team; S.team = d.team.filter(m => m.role !== "viewer"); }
+const isManager = () => S.me && (S.me.role === "lead" || S.me.role === "deputy");
+const dealOf = c => c.deal_id ? S.deals[c.deal_id] : null;
+function dealLine(d) { if (!d) return ""; return [d.deal_number ? "#" + d.deal_number : null, d.bidder ? d.target + " / " + d.bidder : d.target, d.target_country].filter(Boolean).join(" · "); }
+let toastT; function toast(m, err) { const t = $("#toast"); t.textContent = m; t.className = "toast" + (err ? " err" : ""); t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, err ? 6000 : 2600); }
+const errMsg = e => (e && (e.message || e.error_description)) || "Something went wrong. Try again.";
+
+/* ---------- data layer: live (Supabase) ---------- */
+const liveApi = {
+  async load() {
+    const t = today(), since = new Date(Date.now() - 14 * 864e5).toISOString(), d60 = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10);
+    const dcols = "id,deal_number,temp_id,target,bidder,seller,target_country,region,is_public,sector,deal_type,deal_status,is_pending,admin_state,coverage_status,reason_not_covered,value,currency,value_eur,fx_rate,fx_date,date_announced,date_found,source_url,owner_id,exported_at,export_path";
+    const [team, abs, rules, cards, deals] = await Promise.all([
+      sb.from("team_members").select("*").eq("active", true).order("name"),
+      sb.from("absences").select("*").gte("end_date", t).order("start_date"),
+      sb.from("routing_rules").select("*").order("id"),
+      sb.from("cards").select("*").or(`status.in.(open,stuck),created_at.gte.${since},done_at.gte.${since}`).order("created_at", { ascending: false }).limit(3000),
+      sb.from("deals").select(dcols).or(`is_pending.eq.true,date_found.gte.${d60}`).order("date_found", { ascending: false }).limit(4000)
+    ]);
+    for (const r of [team, abs, rules, cards, deals]) if (r.error) throw r.error;
+    const map = {}; deals.data.forEach(d => map[d.id] = d);
+    const missing = [...new Set(cards.data.map(c => c.deal_id).filter(id => id && !map[id]))];
+    if (missing.length) { const r = await sb.from("deals").select(dcols).in("id", missing); if (!r.error) r.data.forEach(d => map[d.id] = d); }
+    return { team: team.data, absences: abs.data, rules: rules.data, cards: cards.data, deals: map };
+  },
+  async detail(id) {
+    const [cm, hi, fi] = await Promise.all([
+      sb.from("card_comments").select("*").eq("card_id", id).order("created_at"),
+      sb.from("card_history").select("*").eq("card_id", id).order("at"),
+      sb.from("card_files").select("*").eq("card_id", id).order("uploaded_at")
+    ]);
+    const files = fi.data || [];
+    if (files.length) {
+      const r = await sb.storage.from(BUCKET).createSignedUrls(files.map(f => f.path), 3600);
+      if (r.data) r.data.forEach((u, i) => files[i].url = u.signedUrl);
+    }
+    return { comments: cm.data || [], history: hi.data || [], files };
+  },
+  rpc: async (fn, args) => { const { error } = await sb.rpc(fn, args); if (error) throw error; },
+  setStatus: (id, s) => liveApi.rpc("set_card_status", { p_card: id, p_status: s }),
+  pick: id => liveApi.rpc("pick_card", { p_card: id }),
+  reassign: (id, m) => liveApi.rpc("reassign_card", { p_card: id, p_member: m }),
+  decide: (id, d, n) => liveApi.rpc("decide_card", { p_card: id, p_decision: d, p_note: n || null }),
+  requestReport: id => liveApi.rpc("request_report", { p_deal: id }),
+  setDealOwner: (id, m) => liveApi.rpc("set_deal_owner", { p_deal: id, p_member: m }),
+  comment: (id, b) => liveApi.rpc("add_comment", { p_card: id, p_body: b }),
+  async attach(id, file, kind) {
+    const clean = file.name.replace(/[^A-Za-z0-9._ ()-]/g, "_");
+    const path = `cards/${id}/${Date.now()}-${clean}`;
+    const up = await sb.storage.from(BUCKET).upload(path, file, { contentType: file.type || "application/octet-stream" });
+    if (up.error) throw up.error;
+    await liveApi.rpc("attach_file", { p_card: id, p_path: path, p_name: file.name, p_kind: kind });
+  }
+};
+
+/* ---------- data layer: example data (no database) ---------- */
+const demo = (() => {
+  const T = today(), dAgo = n => new Date(Date.now() - n * 864e5).toISOString(), dd = n => dAgo(n).slice(0, 10);
+  const team = [["Phil", "PS", "lead"], ["Graham", "GR", "deputy"], ["Laure", "LA", "member"], ["Kit", "KI", "member"], ["Blaz", "BL", "member"]].map(([name, initials, role]) => ({ id: name, name, initials, role, email: name.toLowerCase() + "@example.com" }));
+  const deals = {}; const D = (id, o) => deals[id] = Object.assign({ id, is_public: false, is_pending: false, coverage_status: "reported", date_found: dd(3) }, o);
+  D("d1", { deal_number: "0099101", target: "Harlow Castings plc", bidder: "Brightwater Bidco", target_country: "United Kingdom", region: "uk_ie", is_public: true, is_pending: true, deal_status: "Pending", admin_state: "LIVE", owner_id: "Phil", value: 412, currency: "GBP", value_eur: 474, exported_at: dAgo(9), date_announced: dd(31) });
+  D("d2", { deal_number: "0099087", target: "Vignobles Arlaud SA", bidder: "Maison Deroche", target_country: "France", region: "fr_it", is_public: true, is_pending: true, deal_status: "Pending", admin_state: "LIVE", owner_id: "Laure", value: 188, currency: "EUR", value_eur: 188, exported_at: dAgo(4), date_announced: dd(22) });
+  D("d3", { deal_number: "0099120", target: "Nordvik Marine ASA", bidder: "Polar Shipping Holding", target_country: "Norway", region: "western", is_public: true, is_pending: true, deal_status: "Pending", admin_state: "LIVE", owner_id: "Kit", value: 2350, currency: "NOK", value_eur: 201, exported_at: null, date_announced: dd(6) });
+  D("d4", { temp_id: "tessaro/quadrant/" + dd(0), target: "Tessaro Packaging Srl", bidder: "Quadrant Industries", seller: "Fondo Alto Capital", target_country: "Italy", region: "fr_it", deal_type: "Divestiture", deal_status: "Pending", is_pending: true, admin_state: null, owner_id: "Laure", value: 64, currency: "EUR", value_eur: 64, date_found: T, date_announced: T });
+  D("d5", { temp_id: "kestrel/umbra/" + dd(0), target: "Kestrel Data Systems", bidder: "Umbra Software Inc", target_country: "Germany", region: "western", coverage_status: "awaiting_decision", value: 12, currency: "USD", value_eur: 10.3, fx_rate: 0.858, fx_date: T, date_found: T, reason_not_covered: "Close to EUR 10m depending on FX" });
+  D("d6", { target: "Atelier Lumen", bidder: "Groupe Sevran", target_country: "France", region: "fr_it", coverage_status: "logged_only", reason_not_covered: "No value disclosed", date_found: dd(1), sector: "Lighting" });
+  D("d7", { target: "Bryggen Bakeri AS", bidder: "Nordic Food Partners", target_country: "Norway", region: "western", coverage_status: "logged_only", reason_not_covered: "Under EUR 10m (EUR 6.2m)", value: 72, currency: "NOK", value_eur: 6.2, date_found: dd(1), sector: "Food" });
+  D("d8", { deal_number: "0099133", target: "Castello Tiles SpA", bidder: "Ceramica Unita", target_country: "Italy", region: "fr_it", is_public: true, is_pending: true, deal_status: "Pending", admin_state: "LIVE", owner_id: "Laure", value: 95, currency: "EUR", value_eur: 95, exported_at: null, date_announced: dd(2) });
+  D("d9", { target: "Portlaw Renewables", bidder: "Greyabbey Infrastructure", target_country: "Ireland", region: "uk_ie", coverage_status: "write_requested", value: 28, currency: "EUR", value_eur: 28, date_found: dd(2), sector: "Energy" });
+  let n = 0; const cards = []; const extra = {};
+  const C = (type, title, o = {}) => { const id = "c" + (++n); const owner = "owner" in o ? o.owner : "Phil"; cards.push(Object.assign({ id, type, title, status: "open", owner_id: owner, assignee_id: owner, due_date: T, created_at: dAgo(0.1), created_by: "daily-run", qa_flags: [], meta: {}, detail: null, source_url: "https://example.com/announcement", deal_id: null }, o, { owner_id: owner, assignee_id: o.assignee || owner })); extra[id] = { comments: [], history: [{ actor: o.created_by || "daily-run", action: "Card raised" + (owner ? " for " + (o.assignee || owner) : " in the To check queue"), at: dAgo(0.1) }], files: [] }; return id; };
+  C("decision", "Kestrel Data Systems / Umbra Software", { deal_id: "d5", detail: "USD 12.0m for 100%. Converts to EUR 10.3m at the announcement-date rate, just over the EUR 10m line.", meta: { value: "USD 12.0m", value_eur: "EUR 10.3m", fx: "1 USD = 0.858 EUR on " + fmtD(T), why: "Near EUR 10m depending on FX" } });
+  C("update_report", "Harlow Castings: offer increased to 148p from 140p", { deal_id: "d1", detail: "Brightwater Bidco announced an increased and final cash offer of 148p per share.", created_by: "NSM checker" });
+  C("uk_tracker", "Harlow Castings: offer increased to 148p from 140p", { deal_id: "d1", owner: "Blaz", created_by: "NSM checker" });
+  C("update_report", "Vignobles Arlaud: AMF clearance granted, offer opens Monday", { deal_id: "d2", owner: "Laure", assignee: "Phil", detail: "The AMF published its clearance decision; the offer period runs for 25 trading days." });
+  C("eu_tracker", "Vignobles Arlaud: AMF clearance granted, offer opens Monday", { deal_id: "d2", owner: "Blaz" });
+  C("new_offer", "Wexcombe Group plc added to the disclosure table", { owner: "Kit", detail: "Offer period commenced. Possible offer by Tarn Capital (Rule 2.4).", created_by: "Panel monitor" });
+  C("uk_tracker", "Wexcombe Group plc added to the disclosure table", { owner: "Blaz", created_by: "Panel monitor" });
+  C("update_report", "Ashby Leisure plc removed from the disclosure table", { owner: "Graham", detail: "Scheme became effective.", created_by: "Panel monitor", due_date: dd(1), created_at: dAgo(1.2) });
+  C("update_report", "Nordvik Marine: acceptance period extended to 24 October", { deal_id: "d3", owner: "Kit", status: "done", done_by: "Kit", done_at: dAgo(0.5), created_at: dAgo(1.1) });
+  C("eu_tracker", "Nordvik Marine: acceptance period extended to 24 October", { deal_id: "d3", owner: "Blaz", status: "verified", done_by: "Blaz", done_at: dAgo(0.9), verified_at: dAgo(0.2), created_at: dAgo(1.1) });
+  C("report_check", "Tessaro Packaging / Quadrant Industries", { deal_id: "d4", owner: null, detail: "New divestiture report, EUR 64m. Draft and source documents attached.", qa_flags: ["Net debt taken from the seller's press release, not the accounts", "Target accounts are Italian GAAP, FY2025"] });
+  C("final_check", "Castello Tiles / Ceramica Unita", { deal_id: "d8", detail: "Checked by Laure. Final check before upload.", created_by: "Laure" });
+  C("export_upload", "Castello Tiles SpA is LIVE: export the PDF and attach it", { deal_id: "d8", owner: "Laure", assignee: "Phil" });
+  C("document_needed", "Portlaw Renewables: announcement PDF could not be downloaded", { deal_id: "d9", detail: "The press release is behind a cookie wall. Please save it and attach it here so the report can be written." });
+  C("lei_confirm", "Wexcombe Group plc: two possible LEI matches on GLEIF", { owner: "Kit", created_by: "Panel monitor" });
+  C("update_report", "Castello Tiles: CONSOB approved the offer document", { deal_id: "d8", owner: "Laure", assignee: "Phil", status: "stuck", created_at: dAgo(2.2), due_date: dd(2) });
+  extra.c16.comments.push({ author: "Laure", body: "Offer document is 300 pages, Italian only. Need the timetable confirmed before I change the dates.", created_at: dAgo(1.5) });
+  const absences = [{ member_id: "Laure", start_date: T, end_date: dd(-2) }];
+  const rules = [[true, "uk_ie", "update", "update_report", "Phil"], [true, "uk_ie", "completion / deletion", "update_report", "Graham"], [true, "uk_ie", "new offer / table addition", "new_offer", "Kit"], [true, "uk_ie", "everything", "uk_tracker", "Blaz"], [true, "fr_it", "update", "update_report", "Laure"], [true, "fr_it + western", "everything", "eu_tracker", "Blaz"], [true, "western", "update", "update_report", "Kit"], [true, "other_europe", "update", "update_report", "Kit"], [true, "non_europe", "update", "update_report", "Phil"], [false, "*", "update", "update_report", "Laure"]].map(([is_public, region, kind, card_type, assignee], id) => ({ id, is_public, region, kind, card_type, assignee }));
+  const me = () => S.me.id, log = (id, a) => extra[id].history.push({ actor: S.me.name, action: a, at: new Date().toISOString() });
+  const find = id => cards.find(c => c.id === id);
+  return {
+    team,
+    async load() { return { team, absences, rules, cards: cards.map(c => ({ ...c })), deals }; },
+    async detail(id) { return JSON.parse(JSON.stringify(extra[id])); },
+    async setStatus(id, s) { const c = find(id); log(id, `Status: ${c.status} → ${s}`); c.status = s; c.done_by = s === "done" ? me() : (s === "verified" ? c.done_by : null); c.done_at = s === "done" ? new Date().toISOString() : c.done_at;
+      if (s === "done" && c.type === "report_check" && S.me.role !== "lead" && !cards.some(x => x.dk === "final:" + id)) { const f = C("final_check", c.title, { deal_id: c.deal_id, detail: "Checked by " + S.me.name + ". Final check before upload.", created_by: S.me.name, qa_flags: c.qa_flags }); find(f).dk = "final:" + id; } },
+    async pick(id) { const c = find(id); c.owner_id = c.assignee_id = me(); log(id, "Assigned to " + S.me.name); },
+    async reassign(id, m) { const c = find(id); c.assignee_id = m; if (!isAway(c.owner_id)) c.owner_id = m; log(id, "Assigned to " + m); },
+    async decide(id, d, note) { const c = find(id); c.decision = d; c.decision_note = note; c.status = "done"; c.done_by = me(); log(id, d === "write" ? "Decision: write it" : "Decision: skip"); if (c.deal_id) deals[c.deal_id].coverage_status = d === "write" ? "write_requested" : "logged_only"; },
+    async requestReport(id) { deals[id].coverage_status = "write_requested"; },
+    async setDealOwner(id, m) { deals[id].owner_id = m; },
+    async comment(id, b) { extra[id].comments.push({ author: S.me.name, body: b, created_at: new Date().toISOString() }); },
+    async attach(id, file, kind) { extra[id].files.push({ name: file.name, kind, uploaded_by: S.me.name, uploaded_at: new Date().toISOString() }); log(id, "Attached " + file.name); if (kind === "export") { const c = find(id); if (c.deal_id) deals[c.deal_id].exported_at = new Date().toISOString(); } }
+  };
+})();
+const api = LIVE ? liveApi : demo;
+
+/* ---------- loading ---------- */
+let reloadT;
+async function reload(quiet) {
+  try {
+    const d = await api.load();
+    applyData(d); S.loading = false;
+    if (S.me) S.me = S.everyone.find(m => m.id === S.me.id) || S.me;
+    if (S.sel && !S.cards.some(c => c.id === S.sel)) { S.sel = null; S.detail = null; }
+    render();
+    if (S.sel && quiet) openCard(S.sel, true);
+  } catch (e) { S.loading = false; render(); toast(errMsg(e), true); }
+}
+const reloadSoon = () => { clearTimeout(reloadT); reloadT = setTimeout(() => reload(true), 400); };
+async function act(fn, okMsg) { try { await fn(); if (okMsg) toast(okMsg); await reload(true); } catch (e) { toast(errMsg(e), true); } }
+
+/* ---------- rendering ---------- */
+function avatar(id, coverFor) {
+  const m = member(id); if (!m) return `<span class="av none" title="Nobody yet">–</span>`;
+  const cv = coverFor && coverFor !== id ? member(coverFor) : null;
+  return `<span class="av${cv ? " cov" : ""}" title="${esc(m.name)}${cv ? " (covering for " + esc(cv.name) + ")" : ""}">${esc(m.initials)}</span>`;
+}
+function tickBtn(c) {
+  if (c.status === "verified") return `<span class="tick ver" title="Verified by the daily run">✓</span>`;
+  if (!canEdit()) return `<span class="tick na${c.status === "done" ? " on" : ""}" title="View only">${c.status === "done" ? "✓" : ""}</span>`;
+  if (c.type === "decision" && c.status !== "done") return `<span class="tick na" title="Open the card to decide"></span>`;
+  if (c.type === "report_check" && !c.owner_id) return `<span class="tick na" title="Open the card to take it"></span>`;
+  const on = c.status === "done";
+  return `<span role="button" tabindex="0" class="tick${on ? " on" : ""}" data-tick="${esc(c.id)}" aria-label="${on ? "Reopen" : "Mark done"}: ${esc(c.title)}" title="${on ? "Done. Click to reopen" : "Mark done"}">✓</span>`;
+}
+function rowHtml(c, showType) {
+  const d = dealOf(c), late = c.status === "open" && c.due_date && c.due_date < today();
+  const sub = [dealLine(d), c.created_by && c.created_by !== "daily-run" ? "from " + c.created_by : null].filter(Boolean).join(" · ");
+  return `<div class="row${S.sel === c.id ? " sel" : ""}${c.status === "done" || c.status === "verified" ? " fin" : ""}" data-card="${esc(c.id)}" role="button" tabindex="0">
+    ${tickBtn(c)}
+    <span class="ti"><b>${esc(c.title)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>
+    <span class="tg">${showType ? `<span class="tag" style="background:var(--${TYPES[c.type].c === "t2" ? "b2" : TYPES[c.type].c === "am" ? "ab" : TYPES[c.type].c === "in" ? "ib" : TYPES[c.type].c + "b"});color:var(--${TYPES[c.type].c})">${esc(TYPES[c.type].l)}</span>` : (c.qa_flags && c.qa_flags.length ? `<span class="tag" style="background:var(--ab);color:var(--am)">${c.qa_flags.length} QA flag${c.qa_flags.length > 1 ? "s" : ""}</span>` : "")}</span>
+    <span class="pill ${c.status}">${STATUS[c.status]}</span>
+    ${avatar(c.assignee_id, c.owner_id)}
+    <span class="due${late ? " late" : ""}">${late ? "Due " : ""}${esc(fmtD(c.due_date))}</span>
+  </div>`;
+}
+function groupByType(cards) {
+  return TYPE_ORDER.map(t => { const g = cards.filter(c => c.type === t); if (!g.length) return "";
+    return `<section class="grp" style="--gc:var(--${TYPES[t].c})"><h2>${esc(TYPES[t].l)} <span>${g.length}</span></h2><div class="list">${g.map(c => rowHtml(c, false)).join("")}</div></section>`; }).join("");
+}
+const sortCards = a => a.slice().sort((x, y) => (({ stuck: 0, open: 1, done: 2, verified: 3 })[x.status] - ({ stuck: 0, open: 1, done: 2, verified: 3 })[y.status]) || (x.due_date || "").localeCompare(y.due_date || "") || y.created_at.localeCompare(x.created_at));
+const activeOnly = c => c.status === "open" || c.status === "stuck";
+const matchQ = c => { if (!S.q) return true; const q = S.q.toLowerCase(); return (c.title + " " + dealLine(dealOf(c))).toLowerCase().includes(q); };
+
+function viewMyWork() {
+  const mine = sortCards(S.cards.filter(c => c.assignee_id === S.me.id));
+  const open = mine.filter(activeOnly), wait = mine.filter(c => c.status === "done"), late = open.filter(c => c.due_date && c.due_date < today());
+  const covering = open.filter(c => c.owner_id && c.owner_id !== S.me.id);
+  const queue = S.cards.filter(c => c.type === "report_check" && !c.owner_id && c.status === "open").length;
+  const shown = S.status === "active" ? open : mine;
+  return `<div class="top"><div><h1>${S.me.role === "viewer" ? "Today" : esc(S.me.name) + "'s work"}, ${esc(new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/London" }))}</h1>
+    <p>${open.length ? `${open.length} thing${open.length > 1 ? "s" : ""} to do.` : "Nothing waiting for you."}${covering.length ? ` ${covering.length} of them you are covering for someone who is away.` : ""}${queue ? ` ${queue} report${queue > 1 ? "s" : ""} in the shared To check queue.` : ""}</p></div><span class="sp"></span>
+    <div class="stats"><div class="stat"><b>${open.length}</b><span>To do</span></div><div class="stat${late.length ? " warn" : ""}"><b>${late.length}</b><span>Overdue</span></div><div class="stat"><b>${wait.length}</b><span>Done, not yet verified</span></div></div></div>
+  <div class="filters"><button class="chip" data-status="active" aria-pressed="${S.status === "active"}">To do</button><button class="chip" data-status="everything" aria-pressed="${S.status !== "active"}">Include done</button></div>
+  ${shown.length ? groupByType(shown) : `<div class="empty"><b>All clear</b>New cards appear here as the daily run, the NSM checker and the Panel monitor find things for you.</div>`}`;
+}
+function viewAll() {
+  let cs = S.cards.filter(matchQ);
+  if (S.person !== "all") cs = cs.filter(c => S.person === "queue" ? !c.assignee_id : c.assignee_id === S.person);
+  if (S.status === "active") cs = cs.filter(activeOnly); else if (S.status !== "everything") cs = cs.filter(c => c.status === S.status);
+  const act = S.cards.filter(activeOnly), cnt = id => act.filter(c => c.assignee_id === id).length;
+  const people = S.team.map(m => `<button class="chip" data-person="${esc(m.id)}" aria-pressed="${S.person === m.id}">${esc(m.name)}${isAway(m.id) ? " (away)" : ""} <small>${cnt(m.id)}</small></button>`).join("");
+  const groups = S.person === "all"
+    ? S.team.map(m => { const g = sortCards(cs.filter(c => c.assignee_id === m.id)); return g.length ? `<section class="grp"><h2>${avatar(m.id)} ${esc(m.name)} <span>${g.length}</span></h2><div class="list">${g.map(c => rowHtml(c, true)).join("")}</div></section>` : ""; }).join("") +
+      (() => { const g = sortCards(cs.filter(c => !c.assignee_id)); return g.length ? `<section class="grp"><h2>To check queue <span>${g.length}</span></h2><div class="list">${g.map(c => rowHtml(c, true)).join("")}</div></section>` : ""; })()
+    : (cs.length ? `<div class="list" style="border-left-width:0">${sortCards(cs).map(c => rowHtml(c, true)).join("")}</div>` : "");
+  return `<div class="top"><div><h1>All cards</h1><p>Everyone's work. A ringed avatar means the card is being covered for someone who is away.</p></div><span class="sp"></span>
+    <div class="stats"><div class="stat"><b>${act.length}</b><span>Open</span></div><div class="stat${act.some(c => c.status === "stuck") ? " warn" : ""}"><b>${act.filter(c => c.status === "stuck").length}</b><span>Stuck</span></div><div class="stat"><b>${S.cards.filter(c => c.status === "done").length}</b><span>Done, not yet verified</span></div></div></div>
+  <div class="filters"><button class="chip" data-person="all" aria-pressed="${S.person === "all"}">Everyone</button>${people}<span class="sep"></span>
+    ${[["active", "To do"], ["stuck", "Stuck"], ["done", "Done"], ["verified", "Verified"], ["everything", "Everything"]].map(([k, l]) => `<button class="chip" data-status="${k}" aria-pressed="${S.status === k}">${l}</button>`).join("")}
+    <input type="search" id="q" placeholder="Filter by company or deal number" value="${esc(S.q)}" aria-label="Filter cards"></div>
+  ${groups || `<div class="empty"><b>No cards match</b>Change the filters above.</div>`}`;
+}
+function viewToCheck() {
+  const rc = S.cards.filter(c => c.type === "report_check" || c.type === "final_check");
+  const q = sortCards(rc.filter(c => c.type === "report_check" && !c.owner_id && c.status === "open"));
+  const prog = sortCards(rc.filter(c => c.type === "report_check" && c.owner_id && activeOnly(c)));
+  const fin = sortCards(rc.filter(c => c.type === "final_check" && activeOnly(c)));
+  const sec = (t, col, g, note) => g.length ? `<section class="grp" style="--gc:var(--${col})"><h2>${t} <span>${g.length}</span></h2><div class="list">${g.map(c => rowHtml(c, false)).join("")}</div></section>` : (note ? `<section class="grp"><h2>${t} <span>0</span></h2><div class="empty">${note}</div></section>` : "");
+  return `<div class="top"><div><h1>Reports to check</h1><p>New reports wait here until Phil, Laure or Kit takes one. A report checked by Laure or Kit goes to Phil for a final check before upload.</p></div></div>
+  ${sec("Waiting to be taken", "p", q, "<b>Queue is empty</b>New reports from the daily run land here, biggest deals first.")}${sec("Being checked", "a", prog)}${sec("Final check (Phil)", "in", fin)}`;
+}
+function ownerCell(d) {
+  if (!isManager()) return esc((member(d.owner_id) || {}).name || "Unassigned");
+  return `<select data-owner="${esc(d.id)}" aria-label="Responsible person for ${esc(d.target)}"><option value="">Unassigned</option>${S.team.map(m => `<option value="${esc(m.id)}"${m.id === d.owner_id ? " selected" : ""}>${esc(m.name)}</option>`).join("")}</select>`;
+}
+function viewPending() {
+  const q = S.q.toLowerCase();
+  const ds = Object.values(S.deals).filter(d => d.is_pending && (!q || dealLine(d).toLowerCase().includes(q))).sort((a, b) => (a.target || "").localeCompare(b.target || ""));
+  const openFor = id => S.cards.filter(c => c.deal_id === id && activeOnly(c)).length;
+  return `<div class="top"><div><h1>Pending deals</h1><p>Every deal still in progress, with the person responsible and when its database PDF was last uploaded here.</p></div><span class="sp"></span><div class="stats"><div class="stat"><b>${ds.length}</b><span>Pending</span></div><div class="stat${ds.some(d => d.deal_number && !d.exported_at) ? " warn" : ""}"><b>${ds.filter(d => d.deal_number && !d.exported_at).length}</b><span>No export yet</span></div></div></div>
+  <div class="filters"><input type="search" id="q" placeholder="Filter by company or deal number" value="${esc(S.q)}" aria-label="Filter deals"></div>
+  ${ds.length ? `<div class="tw"><table><thead><tr><th>Deal</th><th>Type</th><th>Status</th><th>Responsible</th><th>Last export</th><th class="r">Open cards</th></tr></thead><tbody>${ds.map(d => `<tr>
+    <td><b>${esc(d.target)}</b><small>${esc([d.deal_number ? "#" + d.deal_number : "No number yet", d.bidder, d.target_country].filter(Boolean).join(" · "))}</small></td>
+    <td>${d.is_public ? "Public" : esc(d.deal_type || "Private")}<small>${esc(REGIONS[d.region] || "")}</small></td>
+    <td>${esc(d.deal_status || "")}<small>${esc(d.admin_state || "Not uploaded")}</small></td>
+    <td>${ownerCell(d)}</td>
+    <td>${d.exported_at ? esc(fmtD(d.exported_at)) : `<span style="color:var(--r);font-weight:600">${d.deal_number ? "Needed" : "–"}</span>`}</td>
+    <td class="r">${openFor(d.id) || ""}</td></tr>`).join("")}</tbody></table></div>`
+  : `<div class="empty"><b>No pending deals loaded yet</b>They appear once the pending-deals export and PDFs have been loaded from Phil's PC.</div>`}`;
+}
+function viewFound() {
+  const q = S.q.toLowerCase(), f = S.status;
+  let ds = Object.values(S.deals).filter(d => !q || (dealLine(d) + " " + (d.seller || "") + " " + (d.sector || "")).toLowerCase().includes(q));
+  const counts = k => ds.filter(d => d.coverage_status === k).length;
+  const all = ds; if (COVERAGE[f]) ds = ds.filter(d => d.coverage_status === f);
+  ds.sort((a, b) => (b.date_found || "").localeCompare(a.date_found || "") || (b.value_eur || 0) - (a.value_eur || 0));
+  return `<div class="top"><div><h1>All deals found</h1><p>Everything with a European element the daily run has found, whether or not it was written up. Deals with no value or under EUR 10m are logged here in case coverage expands.</p></div></div>
+  <div class="filters"><button class="chip" data-status="everything" aria-pressed="${!COVERAGE[f]}">All <small>${all.length}</small></button>${Object.entries(COVERAGE).map(([k, l]) => `<button class="chip" data-status="${k}" aria-pressed="${f === k}">${l} <small>${counts(k)}</small></button>`).join("")}
+    <input type="search" id="q" placeholder="Filter by company, seller or sector" value="${esc(S.q)}" aria-label="Filter deals"></div>
+  ${ds.length ? `<div class="tw"><table><thead><tr><th>Found</th><th>Target</th><th>Bidder / seller</th><th>Type</th><th class="r">Value</th><th>Coverage</th><th></th></tr></thead><tbody>${ds.slice(0, 500).map(d => `<tr>
+    <td class="num">${esc(fmtD(d.date_found))}</td>
+    <td><b>${safeUrl(d.source_url) ? `<a href="${esc(d.source_url)}" target="_blank" rel="noopener">${esc(d.target)}</a>` : esc(d.target)}</b><small>${esc([d.target_country, d.sector].filter(Boolean).join(" · "))}</small></td>
+    <td>${esc(d.bidder || "")}<small>${d.seller ? "Seller: " + esc(d.seller) : ""}</small></td>
+    <td>${d.is_public ? "Public" : esc(d.deal_type || "Private")}</td>
+    <td class="r">${d.value != null ? esc((d.currency || "") + " " + fmtN(d.value) + "m") : "Not disclosed"}${d.value_eur != null && d.currency !== "EUR" ? `<small>EUR ${fmtN(d.value_eur)}m</small>` : ""}</td>
+    <td><span class="tag cov-${esc(d.coverage_status)}">${esc(COVERAGE[d.coverage_status])}</span>${d.reason_not_covered && d.coverage_status !== "reported" ? `<small>${esc(d.reason_not_covered)}</small>` : ""}</td>
+    <td>${canEdit() && (d.coverage_status === "logged_only" || d.coverage_status === "awaiting_decision") ? `<button class="btn sm" data-write="${esc(d.id)}">Write report</button>` : ""}</td></tr>`).join("")}</tbody></table></div>`
+  : `<div class="empty"><b>Nothing logged yet</b>The first daily run fills this list.</div>`}`;
+}
+function viewTeam() {
+  const t = today();
+  return `<div class="top"><div><h1>Team</h1><p>Days off come from the "M&amp;A Monitor" Google Calendar ("[Name] off"). An absent person's cards go to Phil; Phil's go to Graham. Unfinished cards go back when the person returns.</p></div></div>
+  <div class="people">${S.team.map(m => { const ab = S.absences.filter(a => a.member_id === m.id), now = ab.find(a => a.start_date <= t && a.end_date >= t), next = ab.find(a => a.start_date > t);
+    return `<div class="person${now ? " away" : ""}">${avatar(m.id)}<div><b>${esc(m.name)}${m.role === "lead" ? " · lead" : m.role === "deputy" ? " · deputy" : ""}</b><small>${now ? "Away until " + esc(fmtD(now.end_date)) : next ? "Off from " + esc(fmtD(next.start_date)) + (next.end_date !== next.start_date ? " to " + esc(fmtD(next.end_date)) : "") : "In"}${!m.email ? " · no login email yet" : ""}</small></div></div>`; }).join("")}</div>
+  <h3>Who gets what</h3>
+  <div class="tw"><table><thead><tr><th>Deal</th><th>Where</th><th>What happened</th><th>Card</th><th>Goes to</th></tr></thead><tbody>${S.rules.map(r => `<tr><td>${r.is_public ? "Public" : "Private / divestiture"}</td><td>${esc(REGIONS[r.region] || (r.region === "*" ? "Anywhere" : r.region))}</td><td>${esc(r.kind === "*" ? "Everything" : String(r.kind).replace(/_/g, " "))}</td><td>${esc((TYPES[r.card_type] || {}).l || r.card_type)}</td><td><b>${esc(r.assignee)}</b></td></tr>`).join("")}</tbody></table></div>`;
+}
+
+function drawerHtml() {
+  const c = S.cards.find(x => x.id === S.sel); if (!c) return "";
+  const d = dealOf(c), T = TYPES[c.type], x = S.detail, mine = c.assignee_id === S.me.id, mgr = isManager();
+  const src = safeUrl(c.source_url);
+  let acts = "";
+  if (!canEdit()) acts = "";
+  else if (c.type === "decision" && activeOnly(c)) {
+    acts = `<div class="dn"><textarea id="dnote" placeholder="Reason (optional). Your answers are logged so the rules sharpen over time." aria-label="Reason"></textarea><div class="acts"><button class="btn pri" data-decide="write">Write it</button><button class="btn" data-decide="skip">Skip</button></div></div>`;
+  } else if (c.type === "report_check" && !c.owner_id && c.status === "open") {
+    acts = `<div class="acts"><button class="btn pri" data-pick>I'll check this one</button></div>`;
+  } else if (c.status === "open" || c.status === "stuck") {
+    acts = `<div class="acts"><button class="btn pri" data-set="done">${c.type === "report_check" || c.type === "final_check" ? "Checked" : "Mark done"}</button>${c.status === "open" ? `<button class="btn" data-set="stuck">I'm stuck</button>` : `<button class="btn" data-set="open">No longer stuck</button>`}</div>`;
+  } else if (c.status === "done") {
+    acts = `<div class="acts"><button class="btn" data-set="open">Reopen</button>${mgr ? `<button class="btn" data-set="verified">Mark verified</button>` : ""}</div>`;
+  } else if (mgr) acts = `<div class="acts"><button class="btn" data-set="open">Reopen</button></div>`;
+  const wantsExport = (c.type === "update_report" || c.type === "export_upload") && c.status !== "verified" && !(x && x.files.some(f => f.kind === "export"));
+  const defKind = c.type === "document_needed" ? "announcement" : (c.type === "update_report" || c.type === "export_upload") ? "export" : "other";
+  const metaRows = Object.entries(c.meta || {}).map(([k, v]) => `<dt>${esc({ value: "Value", value_eur: "In euros", fx: "Rate used", why: "Why it's borderline" }[k] || k)}</dt><dd>${esc(v)}</dd>`).join("");
+  return `<div class="scrim" data-close></div><aside class="drawer" role="dialog" aria-label="Card detail">
+    <div class="dh"><h2>${esc(c.title)}</h2><button class="x" data-close aria-label="Close">✕</button></div>
+    <div class="db">
+      <div class="meta"><span class="tag" style="color:var(--${T.c})">${esc(T.l)}</span><span class="pill ${c.status}" style="padding-inline:8px">${STATUS[c.status]}</span>${avatar(c.assignee_id, c.owner_id)}<span>${esc((member(c.assignee_id) || { name: "To check queue" }).name)}${c.owner_id && c.owner_id !== c.assignee_id ? `, covering for ${esc((member(c.owner_id) || {}).name)}` : ""}</span><span style="color:var(--t3)">Due ${esc(fmtD(c.due_date))}</span></div>
+      ${acts}
+      ${wantsExport && activeOnly(c) ? `<div class="ask">When you've made the change, attach the fresh PDF export below so the next run can verify it.</div>` : ""}
+      ${c.detail || T.h || src ? `<div class="sec"><h4>What happened</h4>${c.detail ? `<p>${esc(c.detail)}</p>` : T.h ? `<p>${esc(T.h)}</p>` : ""}${src ? `<p style="margin-top:6px"><a href="${esc(src)}" target="_blank" rel="noopener">Open the source ↗</a></p>` : ""}</div>` : ""}
+      ${c.decision ? `<div class="sec"><h4>Decision</h4><p>${c.decision === "write" ? "Write it" : "Skip"}${c.decision_note ? " · " + esc(c.decision_note) : ""}</p></div>` : ""}
+      ${c.verify_note ? `<div class="sec"><h4>Verification</h4><p>${esc(c.verify_note)}</p></div>` : ""}
+      ${metaRows ? `<div class="sec"><h4>Figures</h4><dl class="kv">${metaRows}</dl></div>` : ""}
+      ${c.qa_flags && c.qa_flags.length ? `<div class="sec"><h4>QA flags</h4><ul class="qa">${c.qa_flags.map(f => `<li>${esc(typeof f === "string" ? f : JSON.stringify(f))}</li>`).join("")}</ul></div>` : ""}
+      ${d ? `<div class="sec"><h4>Deal</h4><dl class="kv"><dt>Number</dt><dd>${esc(d.deal_number || "Not yet assigned")}</dd><dt>Target</dt><dd>${esc(d.target)}${d.target_country ? " (" + esc(d.target_country) + ")" : ""}</dd>${d.bidder ? `<dt>Bidder</dt><dd>${esc(d.bidder)}</dd>` : ""}${d.seller ? `<dt>Seller</dt><dd>${esc(d.seller)}</dd>` : ""}<dt>Type</dt><dd>${d.is_public ? "Public" : esc(d.deal_type || "Private")} · ${esc(REGIONS[d.region] || "Region not set")}</dd>${d.value != null ? `<dt>Value</dt><dd>${esc((d.currency || "") + " " + fmtN(d.value) + "m")}</dd>` : ""}<dt>Last export</dt><dd>${d.exported_at ? esc(fmtDT(d.exported_at)) : "None yet"}</dd></dl></div>` : ""}
+      <div class="sec"><h4>Files</h4>${x ? (x.files.length ? `<ul class="files">${x.files.map(f => `<li>${safeUrl(f.url) ? `<a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.name)}</a>` : `<span>${esc(f.name)}</span>`}<small>${esc(KINDS[f.kind] || f.kind)} · ${esc(f.uploaded_by || "")} · ${esc(fmtDT(f.uploaded_at))}</small></li>`).join("")}</ul>` : `<p style="color:var(--t3)">Nothing attached.</p>`) : `<p style="color:var(--t3)">Loading…</p>`}
+        ${canEdit() ? `<div class="up"><select id="fkind" aria-label="File type">${Object.entries(KINDS).map(([k, l]) => `<option value="${k}"${k === defKind ? " selected" : ""}>${l}</option>`).join("")}</select><input type="file" id="ffile" hidden><button class="btn sm" data-upload>Attach a file</button></div>` : ""}</div>
+      ${mgr ? `<div class="sec"><h4>Reassign</h4><div class="up"><select id="rto" aria-label="Reassign to">${S.team.map(m => `<option value="${esc(m.id)}"${m.id === c.assignee_id ? " selected" : ""}>${esc(m.name)}${isAway(m.id) ? " (away)" : ""}</option>`).join("")}</select><button class="btn sm" data-reassign>Reassign</button></div></div>` : ""}
+      <div class="sec"><h4>Comments</h4>${x && x.comments.length ? `<ul class="log">${x.comments.map(m => { const tm = S.team.find(t => t.name === m.author); return `<li>${tm ? avatar(tm.id) : `<span class="av none">·</span>`}<div><b>${esc(m.author)}</b> <small>${esc(fmtDT(m.created_at))}</small><p>${esc(m.body)}</p></div></li>`; }).join("")}</ul>` : ""}
+        ${canEdit() ? `<div class="cm"><textarea id="cbody" rows="1" placeholder="Add a comment" aria-label="Comment"></textarea><button class="btn sm" data-comment>Post</button></div>` : ""}</div>
+      <div class="sec"><h4>History</h4><ul class="hist">${x ? x.history.map(h => `<li><b>${esc(h.actor)}</b> · ${esc(h.action)} · ${esc(fmtDT(h.at))}</li>`).join("") : ""}</ul></div>
+    </div></aside>`;
+}
+
+function loginHtml() {
+  return `<div class="wrap"><form class="login" id="login"><div class="logo"><i>M&amp;A</i> Deal Board</div><h1>Sign in</h1><p>Use your work email. We'll send you a sign-in link; no password needed.</p>
+    <label>Work email<input type="email" id="lemail" required autocomplete="email" placeholder="name@ma-monitor.co.uk"></label>
+    ${S.authMsg ? `<div class="msg${S.authMsg.err ? " err" : ""}">${esc(S.authMsg.text)}</div>` : ""}
+    <button class="btn pri" type="submit">Email me a sign-in link</button></form></div>`;
+}
+function render() {
+  const app = $("#app");
+  if (LIVE && !S.session) { app.innerHTML = loginHtml(); return; }
+  if (LIVE && S.session && !S.me) {
+    app.innerHTML = `<div class="wrap"><div class="login"><h1>${S.loading ? "Loading…" : "This email isn't on the board"}</h1>${S.loading ? "" : `<p>${esc(S.session.user.email)} is signed in but hasn't been added to the team list. Ask Phil to add it.</p><button class="btn" id="signout">Sign out</button>`}</div></div>`; return;
+  }
+  if (!S.me) return;
+  const keep = document.activeElement && document.activeElement.id === "q" ? document.activeElement.selectionStart : null;
+  const myOpen = S.cards.filter(c => c.assignee_id === S.me.id && activeOnly(c)).length;
+  const queue = S.cards.filter(c => c.type === "report_check" && !c.owner_id && c.status === "open").length;
+  const badge = { mywork: myOpen, tocheck: queue, all: S.cards.filter(activeOnly).length };
+  const view = { mywork: viewMyWork, all: viewAll, tocheck: viewToCheck, pending: viewPending, found: viewFound, team: viewTeam }[S.tab]();
+  app.innerHTML = `${LIVE ? "" : `<div class="demo" role="note"><b>Example data</b><span>These companies and cards are made up to show how the board works. View it as:</span><select id="viewas" aria-label="View as" style="background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:2px 6px">${S.team.map(m => `<option value="${esc(m.id)}"${m.id === S.me.id ? " selected" : ""}>${esc(m.name)}</option>`).join("")}</select></div>`}
+  <header class="hdr"><div class="wrap"><div class="logo"><i>M&amp;A</i> Deal Board</div>
+    <nav class="tabs" role="tablist">${TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${l}${badge[k] ? ` <b>${badge[k]}</b>` : ""}</button>`).join("")}</nav>
+    <div class="user">${LIVE ? `<span class="live" title="Live updates on"></span>` : ""}<span class="nm">${esc(S.me.name)}${canEdit() ? "" : " (view only)"}</span>${avatar(S.me.id)}${LIVE ? `<button class="btn sm" id="signout">Sign out</button>` : ""}</div></div></header>
+  <main class="wrap">${view}</main>${S.sel ? drawerHtml() : ""}`;
+  if (keep != null) { const q = $("#q"); if (q) { q.focus(); q.setSelectionRange(keep, keep); } }
+}
+
+/* ---------- interaction ---------- */
+async function openCard(id, quiet) {
+  S.sel = id; if (!quiet) { S.detail = null; render(); }
+  try { const d = await api.detail(id); if (S.sel === id) { S.detail = d; const cb = $("#cbody"), keepC = cb ? cb.value : "", dn = $("#dnote"), keepD = dn ? dn.value : ""; render(); if ($("#cbody")) $("#cbody").value = keepC; if ($("#dnote")) $("#dnote").value = keepD; } } catch (e) { toast(errMsg(e), true); }
+}
+function closeCard() { S.sel = null; S.detail = null; render(); }
+function setTab(t, push) { if (!TABS.some(x => x[0] === t)) t = "mywork"; S.tab = t; S.q = ""; S.status = t === "found" ? "everything" : "active"; S.sel = null; S.detail = null; if (push) { try { history.replaceState(null, "", "#" + t); } catch (e) {} } try { localStorage.setItem("board.tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
+
+document.addEventListener("click", async e => {
+  const el = s => e.target.closest(s); let t;
+  if ((t = el("[data-tick]"))) { e.stopPropagation(); const c = S.cards.find(x => x.id === t.dataset.tick); if (!c) return; const to = c.status === "done" ? "open" : "done"; return act(() => api.setStatus(c.id, to), to === "done" ? "Marked done" : "Reopened"); }
+  if ((t = el("[data-tab]"))) return setTab(t.dataset.tab, true);
+  if ((t = el("[data-person]"))) { S.person = t.dataset.person; return render(); }
+  if ((t = el("[data-status]"))) { S.status = t.dataset.status; return render(); }
+  if (el("[data-close]")) return closeCard();
+  if ((t = el("[data-write]"))) return act(() => api.requestReport(t.dataset.write), "Queued. The next run will write the report.");
+  if (el("#signout")) { await sb.auth.signOut(); return; }
+  if (S.sel) {
+    const id = S.sel;
+    if ((t = el("[data-set]"))) return act(() => api.setStatus(id, t.dataset.set), { done: "Marked done", stuck: "Marked stuck", open: "Reopened", verified: "Verified" }[t.dataset.set]);
+    if (el("[data-pick]")) return act(() => api.pick(id), "It's yours. Find it under My work.");
+    if ((t = el("[data-decide]"))) { const note = $("#dnote").value.trim(); return act(() => api.decide(id, t.dataset.decide, note), t.dataset.decide === "write" ? "Queued for a report" : "Skipped and logged"); }
+    if (el("[data-reassign]")) { const to = $("#rto").value; return act(() => api.reassign(id, to), "Reassigned"); }
+    if (el("[data-comment]")) { const b = $("#cbody").value.trim(); if (!b) return; $("#cbody").value = ""; return act(() => api.comment(id, b)); }
+    if (el("[data-upload]")) return $("#ffile").click();
+  }
+  if ((t = el("[data-card]"))) return openCard(t.dataset.card);
+});
+document.addEventListener("change", e => {
+  if (e.target.id === "ffile" && e.target.files[0] && S.sel) { const f = e.target.files[0], kind = $("#fkind").value, id = S.sel; if (f.size > 50 * 1024 * 1024) return toast("That file is over 50 MB.", true); toast("Uploading " + f.name + "…"); return act(() => api.attach(id, f, kind), "Attached " + f.name); }
+  if (e.target.dataset.owner) return act(() => api.setDealOwner(e.target.dataset.owner, e.target.value || null), "Responsible person updated");
+  if (e.target.id === "viewas") { S.me = S.team.find(m => m.id === e.target.value); S.person = "all"; render(); }
+});
+document.addEventListener("input", e => { if (e.target.id === "q") { S.q = e.target.value; render(); } });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && S.sel) return closeCard();
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-card],[data-tick]")) { e.preventDefault(); e.target.click(); }
+});
+document.addEventListener("submit", async e => {
+  if (e.target.id !== "login") return; e.preventDefault();
+  const email = $("#lemail").value.trim().toLowerCase();
+  S.authMsg = { text: "Sending…" }; render();
+  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
+  S.authMsg = error ? { err: true, text: errMsg(error) } : { text: "Check your inbox for the sign-in link, then open it on this device." }; render();
+  if ($("#lemail")) $("#lemail").value = email;
+});
+
+/* ---------- start ---------- */
+async function start() {
+  let tab = (location.hash || "").replace("#", ""); if (!TABS.some(x => x[0] === tab)) { try { tab = localStorage.getItem("board.tab") || "mywork"; } catch (e) { tab = "mywork"; } }
+  S.tab = TABS.some(x => x[0] === tab) ? tab : "mywork"; S.status = S.tab === "found" ? "everything" : "active";
+  if (!LIVE) { S.team = demo.team; S.me = demo.team[0]; return reload(); }
+  sb = supabase.createClient(CONFIG.url, CONFIG.key);
+  let chan = null;
+  sb.auth.onAuthStateChange((ev, session) => {
+    const was = S.session && S.session.user.id; S.session = session;
+    if (!session) { S.me = null; S.loading = false; if (chan) { sb.removeChannel(chan); chan = null; } render(); return; }
+    if (was === session.user.id && S.me) return;
+    S.loading = true; render();
+    setTimeout(async () => {
+      try {
+        const d = await liveApi.load(); applyData(d);
+        S.me = S.everyone.find(m => (m.email || "").toLowerCase() === (session.user.email || "").toLowerCase()) || null;
+      } catch (e) { toast(errMsg(e), true); }
+      S.loading = false; render();
+      if (S.me && !chan) chan = sb.channel("board").on("postgres_changes", { event: "*", schema: "public", table: "cards" }, reloadSoon).on("postgres_changes", { event: "*", schema: "public", table: "card_comments" }, reloadSoon).on("postgres_changes", { event: "*", schema: "public", table: "deals" }, reloadSoon).on("postgres_changes", { event: "*", schema: "public", table: "absences" }, reloadSoon).subscribe();
+    }, 0);
+  });
+  setInterval(() => { if (S.me && document.visibilityState === "visible") reload(true); }, 5 * 60 * 1000);
+}
+start();
+</script>
+</body>
+</html>
