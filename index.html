@@ -132,6 +132,7 @@ td small{display:block;color:var(--t3);font-size:11.5px}
 .addf{border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:14px;background:var(--sf)} .addf h2{font-size:14px;margin:0 0 10px} .addf .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px} .addf label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:600;color:var(--t2)} .addf input,.addf select{border:1px solid var(--b);border-radius:8px;padding:7px 9px;background:var(--bg);color:var(--t);font:inherit;font-weight:400;min-width:0} .addf .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px} .addf .hint{font-size:11.5px;color:var(--t2)}
 .pub b,.pub b a,.row.pub .ti b{color:var(--pub)} .pub b a:hover{color:var(--pub);text-decoration:underline} .pubtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:var(--pubb);color:var(--pub);font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;vertical-align:middle} tr.pubrow .qn{background:var(--pubb);color:var(--pub)} tr.pubrow.next .qn{background:var(--pub);color:#fff}
 .row.bad{box-shadow:inset 3px 0 0 var(--r);background:var(--rb)} .row.bad .ti b,.row.bad.fin .ti b{color:var(--r);font-weight:600} .errtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:var(--r);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;vertical-align:middle}
+.row.prio .ti b{font-weight:800} .grp.prio h2{font-weight:800} .priotag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:var(--rb);color:var(--r);font-size:10.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;vertical-align:middle}
 .asg{max-width:112px;cursor:pointer} .qn{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;border-radius:14px;background:var(--pb);color:var(--p);font-weight:700;font-size:13px} tr.next .qn{background:var(--a);color:var(--on-a)} tr.next td{background:color-mix(in srgb,var(--a) 6%,transparent)} h2.sec{font-size:15px;margin:22px 0 10px}
 .rm{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px} .rm input{flex:1;min-width:150px;border:1px solid var(--b);border-radius:8px;padding:6px 9px;background:var(--bg)}
 .people{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:22px}
@@ -481,9 +482,9 @@ function rowHtml(c, showType) {
   const d = dealOf(c), late = c.status === "open" && c.due_date && c.due_date < today();
   const sub = [c.meta && c.meta.updates > 1 ? c.meta.updates + " updates" : null, dealLine(d), c.created_by && c.created_by !== "daily-run" ? "from " + c.created_by : null].filter(Boolean).join(" · ");
   const pub = S.tab === "tocheck" && d && d.is_public;
-  return `<div class="row${pub ? " pub" : ""}${c.check_failed ? " bad" : ""}${S.sel === c.id ? " sel" : ""}${c.status === "done" || c.status === "verified" ? " fin" : ""}" data-card="${esc(c.id)}" role="button" tabindex="0">
+  return `<div class="row${pub ? " pub" : ""}${c.check_failed ? " bad" : ""}${c.priority && c.status !== "done" && c.status !== "verified" ? " prio" : ""}${S.sel === c.id ? " sel" : ""}${c.status === "done" || c.status === "verified" ? " fin" : ""}" data-card="${esc(c.id)}" role="button" tabindex="0">
     ${tickBtn(c)}
-    <span class="ti"><b>${esc(c.title)}${pub ? `<span class="pubtag">Public</span>` : ""}${c.check_failed ? `<span class="errtag">Possible error</span>` : ""}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>
+    <span class="ti"><b>${esc(c.title)}${pub ? `<span class="pubtag">Public</span>` : ""}${c.priority && c.status !== "done" && c.status !== "verified" ? `<span class="priotag">Priority</span>` : ""}${c.check_failed ? `<span class="errtag">Possible error</span>` : ""}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>
     <span class="tg">${showType ? `<span class="tag" style="background:var(--${TYPES[c.type].c === "t2" ? "b2" : TYPES[c.type].c === "am" ? "ab" : TYPES[c.type].c === "in" ? "ib" : TYPES[c.type].c + "b"});color:var(--${TYPES[c.type].c})">${esc(TYPES[c.type].l)}</span>` : (c.qa_flags && c.qa_flags.length ? `<span class="tag" style="background:var(--ab);color:var(--am)">${c.qa_flags.length} QA flag${c.qa_flags.length > 1 ? "s" : ""}</span>` : "")}</span>
     <span class="pill ${c.status}">${STATUS[c.status]}</span>
     ${avatar(c.assignee_id, c.owner_id)}
@@ -491,10 +492,12 @@ function rowHtml(c, showType) {
   </div>`;
 }
 function groupByType(cards) {
-  return TYPE_ORDER.map(t => { const g = cards.filter(c => c.type === t); if (!g.length) return "";
+  const isPrio = c => c.priority && c.status !== "done" && c.status !== "verified";
+  const prio = cards.filter(isPrio); cards = cards.filter(c => !isPrio(c));
+  return (prio.length ? `<section class="grp prio" style="--gc:var(--r)"><h2>Priority: new offers and disclosure table changes <span>${prio.length}</span></h2><div class="list">${prio.map(c => rowHtml(c, true)).join("")}</div></section>` : "") + TYPE_ORDER.map(t => { const g = cards.filter(c => c.type === t); if (!g.length) return "";
     return `<section class="grp" style="--gc:var(--${TYPES[t].c})"><h2>${esc(TYPES[t].l)} <span>${g.length}</span></h2><div class="list">${g.map(c => rowHtml(c, false)).join("")}</div></section>`; }).join("");
 }
-const sortCards = a => a.slice().sort((x, y) => ((y.check_failed ? 1 : 0) - (x.check_failed ? 1 : 0)) || (({ stuck: 0, open: 1, done: 2, verified: 3 })[x.status] - ({ stuck: 0, open: 1, done: 2, verified: 3 })[y.status]) || (x.due_date || "").localeCompare(y.due_date || "") || y.created_at.localeCompare(x.created_at));
+const sortCards = a => a.slice().sort((x, y) => ((y.check_failed ? 1 : 0) - (x.check_failed ? 1 : 0)) || ((y.priority && activeOnly(y) ? 1 : 0) - (x.priority && activeOnly(x) ? 1 : 0)) || (({ stuck: 0, open: 1, done: 2, verified: 3 })[x.status] - ({ stuck: 0, open: 1, done: 2, verified: 3 })[y.status]) || (x.due_date || "").localeCompare(y.due_date || "") || y.created_at.localeCompare(x.created_at));
 const activeOnly = c => c.status === "open" || c.status === "stuck" || (c.check_failed && c.status !== "verified");
 const matchQ = c => { if (!S.q) return true; const q = S.q.toLowerCase(); return (c.title + " " + dealLine(dealOf(c))).toLowerCase().includes(q); };
 
@@ -577,7 +580,8 @@ function addForm() {
 function queueOrder() {
   const held = new Set(S.cards.filter(c => c.type === "document_needed" && (c.status === "open" || c.status === "stuck") && c.deal_id).map(c => c.deal_id));
   const q = Object.values(S.deals).filter(d => d.coverage_status === "write_requested" && !d.deal_number);
-  const key = d => [held.has(d.id) ? 1 : 0, d.urgent_at ? 0 : 1, d.urgent_at || "", -(d.value_eur || 0), d.date_found || ""];
+  const ukPub = d => d.region === "uk_ie" && d.is_public && d.deal_type !== "Pub.Inv.Trust";
+  const key = d => [held.has(d.id) ? 1 : 0, d.urgent_at ? 0 : 1, d.urgent_at || "", ukPub(d) ? 0 : 1, -(d.value_eur || 0), d.date_found || ""];
   q.sort((a, b) => { const x = key(a), y = key(b); for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return x[i] < y[i] ? -1 : 1; return 0; });
   return { q, held };
 }
@@ -588,7 +592,7 @@ function viewQueue() {
   const val = d => `${d.value != null ? esc((d.currency || "") + " " + fmtN(d.value) + "m") : "Not disclosed"}${d.value_eur != null && d.currency !== "EUR" ? `<small>EUR ${fmtN(d.value_eur)}m</small>` : ""}`;
   const name = d => `<span${d.is_public ? ' class="pub"' : ""}><b>${safeUrl(d.source_url) ? `<a href="${esc(d.source_url)}" target="_blank" rel="noopener">${esc(d.target)}</a>` : esc(d.target)}</b>${d.is_public ? `<span class="pubtag">Public</span>` : ""}</span><small>${esc([d.target_country, d.is_public ? "Public" : (d.deal_type || "Private")].filter(Boolean).join(" · "))}</small>`;
   const writing = d => d.writing_started_at && Date.now() - new Date(d.writing_started_at).getTime() < 4 * 36e5;
-  return `<div class="top"><div><div class="eyebrow">DIANA · Report queue</div><h1>Report queue</h1><p>Reports waiting to be written, in the order the report writer will take them: urgent ones first, then the largest. It writes one each hour at quarter to, day and night from Monday to Friday, and puts it on the admin site as a draft. Public deals are shown in purple.</p></div><span class="sp"></span><div class="stats"><div class="stat${q.length ? " warn" : ""}"><b>${q.length}</b><span>Waiting</span></div><div class="stat"><b>${urgent}</b><span>Urgent</span></div><div class="stat"><b>${byHand.length}</b><span>With a person</span></div></div>${canEdit() && !S.adding ? `<button class="btn pri" data-addopen>Add a deal</button>` : ""}</div>
+  return `<div class="top"><div><div class="eyebrow">DIANA · Report queue</div><h1>Report queue</h1><p>Reports waiting to be written, in the order the report writer will take them: urgent ones first, then UK and Irish public offers, then the largest. It writes up to six a day, back to back, Monday to Friday (urgent deals and UK / Irish public offers are written whatever the count), and puts each on the admin site as a draft. Public deals are shown in purple.</p></div><span class="sp"></span><div class="stats"><div class="stat${q.length ? " warn" : ""}"><b>${q.length}</b><span>Waiting</span></div><div class="stat"><b>${urgent}</b><span>Urgent</span></div><div class="stat"><b>${byHand.length}</b><span>With a person</span></div></div>${canEdit() && !S.adding ? `<button class="btn pri" data-addopen>Add a deal</button>` : ""}</div>
   ${canEdit() && S.adding ? addForm() : ""}
   ${q.length ? `<div class="tw"><table class="qt"><thead><tr><th>Order</th><th>Target</th><th>Bidder / seller</th><th class="r">Value</th><th>Note</th><th></th></tr></thead><tbody>${q.map(d => { const pos = ready.indexOf(d) + 1; return `<tr class="${pos === 1 ? "next" : ""}${d.is_public ? " pubrow" : ""}">
     <td class="num">${held.has(d.id) ? `<span class="tag cov-logged_only">On hold</span>` : `<span class="qn">${pos}</span>${writing(d) ? `<small><b>Being written now</b></small>` : pos === 1 ? `<small><b>Next</b></small>` : ""}`}${d.urgent_at ? `<small><span class="tag cov-excluded">Urgent</span></small>` : ""}</td>
