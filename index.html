@@ -362,6 +362,19 @@ const liveApi = {
   assignDeal: (id, m) => liveApi.rpc("assign_deal", { p_deal: id, p_member: m }),
   addDeal: f => liveApi.rpc("add_deal", { p_target: f.target, p_bidder: f.bidder || null, p_seller: f.seller || null, p_country: f.country, p_public: f.kind === "public", p_value: f.value === "" || f.value == null ? null : Number(f.value), p_currency: f.currency || null, p_date: f.date || null, p_url: f.url || null, p_action: f.action }),
   writeNow: id => liveApi.rpc("write_now", { p_deal: id }),
+  // ask the write-now function to start the report writer straight away; returns the message to show
+  startWriter: async () => {
+    const later = "The report writer could not be started just now, so it takes this one on its next run (8.45am, 12.45pm or 3.45pm).";
+    try {
+      const { data, error } = await sb.functions.invoke("write-now", { body: {} });
+      if (error || !data) return later;
+      if (data.state === "fired") return "The report writer has been started and is writing this one now.";
+      if (data.state === "starting") return "The report writer was started a few minutes ago - it takes this one first.";
+      if (data.state === "busy") return "The report writer is busy with " + data.target + " - this one is written straight after.";
+      if (data.state === "none") return "Marked urgent.";
+      return later;
+    } catch (e) { return later; }
+  },
   setDealOwner: (id, m) => liveApi.rpc("set_deal_owner", { p_deal: id, p_member: m }),
   comment: (id, b) => liveApi.rpc("add_comment", { p_card: id, p_body: b }),
   async pdfText(file) {
@@ -437,6 +450,7 @@ const demo = (() => {
     async requestReport(id) { deals[id].coverage_status = "write_requested"; },
     async excludeDeal(id, reason) { deals[id].coverage_status = "excluded"; deals[id].reason_not_covered = reason || "Removed: does not belong on the list"; cards.forEach(c => { if (c.deal_id === id && c.type === "decision" && c.status === "open") { c.status = "done"; c.decision = "skip"; } }); },
     async writeNow(id) { deals[id].coverage_status = "write_requested"; deals[id].urgent_at = new Date().toISOString(); },
+    async startWriter() { return "The report writer has been started and is writing this one now."; },
     async addDeal(f) { const id = "n" + Date.now(); deals[id] = { id, target: f.target.toUpperCase(), bidder: (f.bidder || "").toUpperCase(), seller: f.seller, target_country: f.country, region: "uk_ie", is_public: f.kind === "public", coverage_status: f.action === "log" ? "logged_only" : f.action === "mine" ? "reported" : "write_requested", urgent_at: f.action === "now" ? new Date().toISOString() : null, writing_note: f.action === "mine" ? "Being written by " + S.me.name + " (not by the report writer)" : null, owner_id: f.action === "mine" ? me() : null, value: f.value === "" ? null : Number(f.value), currency: f.currency, value_eur: f.currency === "EUR" && f.value !== "" ? Number(f.value) : null, date_found: new Date().toISOString().slice(0, 10), date_announced: f.date, source_url: f.url }; },
     async assignDeal(id, m) { const d = deals[id]; if (!m) { d.coverage_status = "write_requested"; d.owner_id = null; d.writing_note = null; } else { d.coverage_status = "reported"; d.owner_id = m; d.urgent_at = null; d.writing_note = "Being written by " + team.find(x => x.id === m).name + " (not by the report writer)"; } },
     async finishDeal(id) { const d = deals[id], w = (team.find(x => x.id === d.owner_id) || {}).name || S.me.name; d.writing_note = "Written by " + w + " - with Phil for the final check"; d.admin_state = "DRAFT"; },
@@ -574,7 +588,7 @@ function addForm() {
     <label>Currency<input data-af="currency" value="${v("currency")}" maxlength="3" placeholder="EUR, GBP, USD"></label>
     <label>Date announced<input data-af="date" value="${v("date")}" type="date"></label>
     <label style="grid-column:1/-1">Link to the announcement<input data-af="url" value="${v("url")}" type="url" placeholder="https://"></label>
-    <label style="grid-column:1/-1">What should happen<select data-af="action">${o("action", "queue", "Queue it for the report writer")}${o("action", "now", "Write now - the report writer takes it next")}${o("action", "mine", "I'll write it myself")}${o("action", "log", "Just log it - no report")}</select></label></div>
+    <label style="grid-column:1/-1">What should happen<select data-af="action">${o("action", "queue", "Queue it for the report writer")}${o("action", "now", "Write now - the report writer starts on it straight away")}${o("action", "mine", "I'll write it myself")}${o("action", "log", "Just log it - no report")}</select></label></div>
     <div class="row"><button class="btn pri" type="submit">Add deal</button><button class="btn" type="button" data-addcancel>Cancel</button><span class="hint">Names are stored in capitals. A country not on the list is treated as outside Europe.</span></div></form>`;
 }
 function queueOrder() {
@@ -720,7 +734,7 @@ document.addEventListener("click", async e => {
   if ((t = el("[data-status]"))) { S.status = t.dataset.status; return render(); }
   if (el("[data-close]")) return closeCard();
   if ((t = el("[data-write]"))) return act(() => api.requestReport(t.dataset.write), "Queued. The next run will write the report.");
-  if ((t = el("[data-now]"))) return act(() => api.writeNow(t.dataset.now), "Marked urgent. The report writer takes it on its next run.");
+  if ((t = el("[data-now]"))) { try { await api.writeNow(t.dataset.now); toast(await api.startWriter()); await reload(true); } catch (err) { toast(errMsg(err), true); } return; }
   if (el("[data-addopen]")) { S.adding = true; S.af = AF0(); render(); const i = document.querySelector('[data-af="target"]'); if (i) i.focus(); return; }
   if (el("[data-addcancel]")) { S.adding = false; S.af = null; return render(); }
   if ((t = el("[data-finish]"))) return act(() => api.finishDeal(t.dataset.finish), "Sent for the final check.");
@@ -758,7 +772,7 @@ document.addEventListener("submit", async e => {
   if (e.target.id === "addf") {
     e.preventDefault(); const f = { ...S.af }; ["target", "bidder", "seller", "country", "currency", "url"].forEach(k => f[k] = (f[k] || "").trim());
     if (!f.target || !f.country) return toast("Enter the target and its country.", true);
-    try { await api.addDeal(f); S.adding = false; S.af = null; S.q = ""; toast({ queue: "Added and queued for the report writer.", now: "Added. The report writer takes it on its next run.", mine: "Added in your name.", log: "Added to the list." }[f.action]); await reload(true); } catch (err) { toast(errMsg(err), true); }
+    try { await api.addDeal(f); S.adding = false; S.af = null; S.q = ""; toast(f.action === "now" ? "Added. " + await api.startWriter() : { queue: "Added and queued for the report writer.", mine: "Added in your name.", log: "Added to the list." }[f.action]); await reload(true); } catch (err) { toast(errMsg(err), true); }
     return;
   }
   if (e.target.id !== "login") return; e.preventDefault();
