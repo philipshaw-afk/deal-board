@@ -130,6 +130,7 @@ td small{display:block;color:var(--t3);font-size:11.5px}
 .cov-reported{background:var(--gb);color:var(--g)} .cov-awaiting_decision{background:var(--ab);color:var(--am)}
 .cov-write_requested{background:var(--pb);color:var(--p)} .cov-logged_only{background:var(--b2);color:var(--t2)} .cov-excluded{background:var(--rb);color:var(--r)}
 .addf{border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:14px;background:var(--sf)} .addf h2{font-size:14px;margin:0 0 10px} .addf .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px} .addf label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:600;color:var(--t2)} .addf input,.addf select{border:1px solid var(--b);border-radius:8px;padding:7px 9px;background:var(--bg);color:var(--t);font:inherit;font-weight:400;min-width:0} .addf .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px} .addf .hint{font-size:11.5px;color:var(--t2)}
+.lurow>td{padding:2px 16px 14px!important;border-top:0!important} tr.lurow:hover{background:transparent} .luf{margin:0;position:sticky;left:16px;max-width:calc(100vw - 64px);box-sizing:border-box} .luf h2 small{font-weight:400;color:var(--t2);margin-left:6px} .luf .who{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;min-width:0} .luf .who legend{font-size:11.5px;font-weight:600;color:var(--t2);padding:0;margin-bottom:4px} .luf .who label{flex-direction:row;align-items:center;gap:8px;font-size:12.5px;font-weight:400;color:var(--t)} .luf input[type=radio]{padding:0;border:0;margin:0;width:auto;accent-color:var(--a)} .luf input[type=file]{padding:6px 8px} .luf .fn{font-weight:400;color:var(--t2)} .luf .prev{font-size:12px;color:var(--t2);margin-top:12px} .luf .prev b{color:var(--t);font-weight:600}
 .pub b,.pub b a,.row.pub .ti b{color:var(--pub)} .pub b a:hover{color:var(--pub);text-decoration:underline} .pubtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:var(--pubb);color:var(--pub);font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;vertical-align:middle} tr.pubrow .qn{background:var(--pubb);color:var(--pub)} tr.pubrow.next .qn{background:var(--pub);color:#fff}
 .row.bad{box-shadow:inset 3px 0 0 var(--r);background:var(--rb)} .row.bad .ti b,.row.bad.fin .ti b{color:var(--r);font-weight:600} .errtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:var(--r);color:#fff;font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;vertical-align:middle}
 .igntag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:var(--ab);color:var(--am);font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;vertical-align:middle} .ignbox{margin-top:10px}
@@ -362,6 +363,11 @@ const liveApi = {
   finishDeal: id => liveApi.rpc("finish_deal", { p_deal: id }),
   assignDeal: (id, m) => liveApi.rpc("assign_deal", { p_deal: id, p_member: m }),
   addDeal: f => liveApi.rpc("add_deal", { p_target: f.target, p_bidder: f.bidder || null, p_seller: f.seller || null, p_country: f.country, p_public: f.kind === "public", p_value: f.value === "" || f.value == null ? null : Number(f.value), p_currency: f.currency || null, p_date: f.date || null, p_url: f.url || null, p_action: f.action }),
+  // news on a pending deal that someone found themselves; returns the id of the report-update card
+  async logUpdate(f) {
+    const { data, error } = await sb.rpc("log_update", { p_deal: f.deal, p_kind: f.kind, p_what: f.what, p_event: f.date || null, p_detail: f.detail || null, p_url: f.url || null, p_mine: f.who === "me" });
+    if (error) throw error; return data;
+  },
   writeNow: id => liveApi.rpc("write_now", { p_deal: id }),
   // ask the write-now function to start the report writer straight away; returns the message to show
   startWriter: async () => {
@@ -453,6 +459,11 @@ const demo = (() => {
     async decide(id, d, note) { const c = find(id); c.decision = d; c.decision_note = note; c.status = "done"; c.done_by = me(); log(id, d === "write" ? "Decision: write it" : "Decision: skip"); if (c.deal_id) deals[c.deal_id].coverage_status = d === "write" ? "write_requested" : "logged_only"; },
     async requestReport(id) { deals[id].coverage_status = "write_requested"; },
     async excludeDeal(id, reason) { deals[id].coverage_status = "excluded"; deals[id].reason_not_covered = reason || "Removed: does not belong on the list"; cards.forEach(c => { if (c.deal_id === id && c.type === "decision" && c.status === "open") { c.status = "done"; c.decision = "skip"; } }); },
+    async logUpdate(f) { const d = deals[f.deal], usual = usualPerson(d, f.kind) || "Phil", owner = f.who === "me" ? me() : usual;
+      const detail = (f.detail ? f.detail + "\n\n" : "") + "Logged by " + S.me.name + " from Pending deals" + (f.who === "me" ? ", who is updating the report." : ".");
+      const id = C("update_report", luTitle(d, f), { deal_id: f.deal, owner, detail, source_url: f.url || null, created_by: S.me.name, created_at: new Date().toISOString() });
+      if (d.is_public && d.region === "uk_ie") C("uk_tracker", luTitle(d, f), { deal_id: f.deal, owner: "Blaz", detail, source_url: f.url || null, created_by: S.me.name, created_at: new Date().toISOString() });
+      d.last_reviewed = today(); d.review_note = luTitle(d, f).slice(d.target.length + 2) + " - logged by " + S.me.name; return id; },
     async writeNow(id) { deals[id].coverage_status = "write_requested"; deals[id].urgent_at = new Date().toISOString(); },
     async startWriter() { return "The report writer has been started and is writing this one now."; },
     async addDeal(f) { const id = "n" + Date.now(); deals[id] = { id, target: f.target.toUpperCase(), bidder: (f.bidder || "").toUpperCase(), seller: f.seller, target_country: f.country, region: "uk_ie", is_public: f.kind === "public", coverage_status: f.action === "log" ? "logged_only" : f.action === "mine" ? "reported" : "write_requested", urgent_at: f.action === "now" ? new Date().toISOString() : null, writing_note: f.action === "mine" ? "Being written by " + S.me.name + " (not by the report writer)" : null, owner_id: f.action === "mine" ? me() : null, value: f.value === "" ? null : Number(f.value), currency: f.currency, value_eur: f.currency === "EUR" && f.value !== "" ? Number(f.value) : null, date_found: new Date().toISOString().slice(0, 10), date_announced: f.date, source_url: f.url }; },
@@ -461,7 +472,7 @@ const demo = (() => {
     async claimDeal(id) { deals[id].coverage_status = "reported"; deals[id].owner_id = me(); deals[id].writing_note = "Being written by " + S.me.name + " (not by the report writer)"; },
     async restoreDeal(id) { deals[id].coverage_status = "logged_only"; deals[id].reason_not_covered = "Restored to the list"; },
     async setDealOwner(id, m) { deals[id].owner_id = m; },
-    async ignoreCheck(id, note) { const c = find(id); c.check_failed = false; c.check_ignored_at = new Date().toISOString(); c.check_ignored_by = me(); c.check_ignore_note = note || null; log(id, "Ignored the possible error" + (note ? ": " + note : "")); if (note) extra[id].comments.push({ author: S.me.name, body: "Not an error: " + note, created_at: new Date().toISOString() }); if (c.status === "open" || c.status === "stuck") await this.setStatus(id, "done"); },
+    async ignoreCheck(id, note) { const c = find(id); c.check_failed = false; c.check_ignored_at = new Date().toISOString(); c.check_ignored_by = me(); c.check_ignore_note = note || null; log(id, "Ignored the possible error" + (note ? ": " + note : "")); if (note) extra[id].comments.push({ author: S.me.name, body: "Not an error: " + note, created_at: new Date().toISOString() }); if (c.status === "open" || c.status === "stuck") await this.setStatus(id, "done"); log(id, "Status: done → verified"); c.status = "verified"; c.verified_at = new Date().toISOString(); },
     async comment(id, b) { extra[id].comments.push({ author: S.me.name, body: b, created_at: new Date().toISOString() }); },
     async attach(id, file, kind) { extra[id].files.push({ name: file.name, kind, uploaded_by: S.me.name, uploaded_at: new Date().toISOString() }); log(id, "Attached " + file.name); if (kind === "export") { const c = find(id); if (c.deal_id) deals[c.deal_id].exported_at = new Date().toISOString(); } }
   };
@@ -480,7 +491,7 @@ async function reload(quiet) {
     if (S.sel && quiet) openCard(S.sel, true);
   } catch (e) { S.loading = false; render(); toast(errMsg(e), true); }
 }
-const reloadSoon = () => { clearTimeout(reloadT); reloadT = setTimeout(() => { if (S.removing) return reloadSoon(); reload(true); }, 400); };
+const reloadSoon = () => { clearTimeout(reloadT); reloadT = setTimeout(() => { if (S.removing || (S.lu && $("#luf"))) return reloadSoon(); reload(true); }, 400); };
 async function act(fn, okMsg) { try { await fn(); if (okMsg) toast(okMsg); await reload(true); } catch (e) { toast(errMsg(e), true); } }
 
 /* ---------- rendering ---------- */
@@ -503,7 +514,7 @@ function rowHtml(c, showType) {
   const pub = S.tab === "tocheck" && d && d.is_public;
   return `<div class="row${pub ? " pub" : ""}${c.check_failed ? " bad" : ""}${c.priority && c.status !== "done" && c.status !== "verified" ? " prio" : ""}${S.sel === c.id ? " sel" : ""}${c.status === "done" || c.status === "verified" ? " fin" : ""}" data-card="${esc(c.id)}" role="button" tabindex="0">
     ${tickBtn(c)}
-    <span class="ti"><b>${esc(c.title)}${pub ? `<span class="pubtag">Public</span>` : ""}${c.priority && c.status !== "done" && c.status !== "verified" ? `<span class="priotag">Priority</span>` : ""}${c.check_failed ? `<span class="errtag">Possible error</span>` : ""}${c.check_ignored_at && !c.check_failed && c.status !== "verified" ? `<span class="igntag" title="${esc(ignLine(c))}">Error ignored</span>` : ""}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>
+    <span class="ti"><b>${esc(c.title)}${pub ? `<span class="pubtag">Public</span>` : ""}${c.priority && c.status !== "done" && c.status !== "verified" ? `<span class="priotag">Priority</span>` : ""}${c.check_failed ? `<span class="errtag">Possible error</span>` : ""}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>
     <span class="tg">${showType ? `<span class="tag" style="background:var(--${TYPES[c.type].c === "t2" ? "b2" : TYPES[c.type].c === "am" ? "ab" : TYPES[c.type].c === "in" ? "ib" : TYPES[c.type].c + "b"});color:var(--${TYPES[c.type].c})">${esc(TYPES[c.type].l)}</span>` : (c.qa_flags && c.qa_flags.length ? `<span class="tag" style="background:var(--ab);color:var(--am)">${c.qa_flags.length} QA flag${c.qa_flags.length > 1 ? "s" : ""}</span>` : "")}</span>
     <span class="pill ${c.status}">${STATUS[c.status]}</span>
     ${avatar(c.assignee_id, c.owner_id)}
@@ -567,17 +578,49 @@ function viewPending() {
   const q = S.q.toLowerCase();
   const ds = Object.values(S.deals).filter(d => d.is_pending && (!q || dealLine(d).toLowerCase().includes(q))).sort((a, b) => (a.review_due || "9999").localeCompare(b.review_due || "9999") || (a.target || "").localeCompare(b.target || ""));
   const openFor = id => S.cards.filter(c => c.deal_id === id && activeOnly(c)).length;
-  return `<div class="top"><div><div class="eyebrow">DIANA · Pending deals</div><h1>Pending deals</h1><p>Every deal still in progress, with the person responsible and when its database PDF was last uploaded here. Earliest expected completion first; deals with no date are at the end.</p></div><span class="sp"></span><div class="stats"><div class="stat"><b>${ds.length}</b><span>Pending</span></div><div class="stat${ds.some(d => d.deal_number && !d.exported_at) ? " warn" : ""}"><b>${ds.filter(d => d.deal_number && !d.exported_at).length}</b><span>No export yet</span></div></div></div>
+  return `<div class="top"><div><div class="eyebrow">DIANA · Pending deals</div><h1>Pending deals</h1><p>Every deal still in progress, with the person responsible and when its database PDF was last uploaded here. Earliest expected completion first; deals with no date are at the end.${canEdit() ? " Found news on a deal yourself? Use <b>Log an update</b> on its row." : ""}</p></div><span class="sp"></span><div class="stats"><div class="stat"><b>${ds.length}</b><span>Pending</span></div><div class="stat${ds.some(d => d.deal_number && !d.exported_at) ? " warn" : ""}"><b>${ds.filter(d => d.deal_number && !d.exported_at).length}</b><span>No export yet</span></div></div></div>
   <div class="filters"><input type="search" id="q" placeholder="Filter by company or deal number" value="${esc(S.q)}" aria-label="Filter deals"></div>
-  ${ds.length ? `<div class="tw"><table><thead><tr><th>Deal</th><th>Type</th><th>Status</th><th>Responsible</th><th>Expected completion / next review &#9650;</th><th>Last export</th><th class="r">Open cards</th></tr></thead><tbody>${ds.map(d => `<tr>
+  ${ds.length ? `<div class="tw"><table><thead><tr><th>Deal</th><th>Type</th><th>Status</th><th>Responsible</th><th>Expected completion / next review &#9650;</th><th>Last export</th><th class="r">Open cards</th>${canEdit() ? "<th></th>" : ""}</tr></thead><tbody>${ds.map(d => `<tr>
     <td><b>${esc(d.target)}</b><small>${esc([d.deal_number ? "#" + d.deal_number : "No number yet", d.bidder, d.target_country].filter(Boolean).join(" · "))}</small></td>
     <td>${d.is_public ? "Public" : esc(d.deal_type || "Private")}<small>${esc(REGIONS[d.region] || "")}</small></td>
     <td>${esc(d.deal_status || "")}<small>${esc(d.admin_state || "Not uploaded")}</small></td>
     <td>${ownerCell(d)}</td>
     <td>${d.review_due ? `<span${d.review_due <= today() ? ' style="color:var(--r);font-weight:600"' : ""}>${esc(fmtD(d.review_due))}</span>` : "–"}<small>${esc(d.review_note || (d.last_reviewed ? "Last looked " + fmtD(d.last_reviewed) : ""))}</small></td>
     <td>${d.exported_at ? esc(fmtD(d.exported_at)) : `<span style="color:var(--r);font-weight:600">${d.deal_number ? "Needed" : "–"}</span>`}</td>
-    <td class="r">${openFor(d.id) || ""}</td></tr>`).join("")}</tbody></table></div>`
+    <td class="r">${openFor(d.id) || ""}</td>${canEdit() ? `<td class="r">${S.lu && S.lu.deal === d.id ? "" : `<button class="btn sm" data-luopen="${esc(d.id)}" title="Log news you found yourself: a completion, a lapse or any other update">Log an update</button>`}</td>` : ""}</tr>${canEdit() && S.lu && S.lu.deal === d.id ? `<tr class="lurow"><td colspan="8">${luForm(d)}</td></tr>` : ""}`).join("")}</tbody></table></div>`
   : S.q ? `<div class="empty"><b>No pending deal matches "${esc(S.q)}"</b>A deal appears here once it has its database deal number - when its exported PDF is attached to its card or loaded from Phil's PC. Until then, look under Report queue or All deals found.</div>` : `<div class="empty"><b>No pending deals loaded yet</b>They appear once the pending-deals export and PDFs have been loaded from Phil's PC.</div>`}`;
+}
+/* ---------- Pending deals: log news someone found themselves ---------- */
+const LU_KINDS = { completion: ["Completed", "completed"], failed: ["Lapsed, terminated or withdrawn", "terminated"], update: ["Other update", ""] };
+const LU0 = d => ({ deal: d.id, kind: "completion", what: "completed", date: "", detail: "", url: "", who: "me", file: null });
+// the routing rules a logged update follows (the database applies the same rules when the card is raised)
+function luRoutes(d, kind) {
+  const k = kind === "update" ? "update" : "completion", pub = !!(d && d.is_public);
+  return (S.rules || []).filter(r => !!r.is_public === pub && (r.region === "*" || r.region === d.region) && (r.kind === "*" || r.kind === k));
+}
+function usualPerson(d, kind) { const r = luRoutes(d, kind).find(x => x.card_type === "update_report"); return r ? r.assignee : null; }
+function luTitle(d, f) {
+  const what = (f.what || "").trim() || "…";
+  const when = f.date ? " on " + new Date(f.date + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : "";
+  return d.target + ": " + what + when;
+}
+function luForm(d) {
+  const f = S.lu, v = k => esc(f[k] || ""), usual = usualPerson(d, f.kind);
+  const mineIsUsual = !!(usual && S.me && usual.toLowerCase() === String(S.me.name).toLowerCase()); if (mineIsUsual) f.who = "me";
+  const ph = { completion: "completed", failed: "e.g. lapsed, terminated, withdrawn", update: "e.g. CMA clearance granted" }[f.kind];
+  const trk = d.deal_type === "Pub.Inv.Trust" ? [] : [...new Set(luRoutes(d, f.kind).filter(r => r.card_type === "uk_tracker" || r.card_type === "eu_tracker").map(r => r.assignee + " also gets a " + (r.card_type === "uk_tracker" ? "UK" : "European") + " Tracker card"))];
+  return `<form class="addf luf" id="luf"><h2>Log an update<small>${esc(dealLine(d))}</small></h2><div class="g">
+    <label>What happened<select data-lu="kind">${Object.entries(LU_KINDS).map(([k, [l]]) => `<option value="${k}"${f.kind === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>
+    <label>In a few words<input data-lu="what" value="${v("what")}" required maxlength="160" placeholder="${esc(ph)}"></label>
+    <label>Date it happened<input data-lu="date" value="${v("date")}" type="date" max="${today()}"></label>
+    <label>Link to the source<input data-lu="url" value="${v("url")}" type="url" placeholder="https:// (optional)"></label>
+    <label style="grid-column:1/-1">More detail (optional)<input data-lu="detail" value="${v("detail")}" maxlength="1000" placeholder="e.g. Companies House filing; price adjusted on completion"></label>
+    <fieldset class="who" style="grid-column:1/-1"><legend>Who updates the report</legend>
+      <label><input type="radio" name="luwho" data-lu="who" value="me"${f.who === "me" ? " checked" : ""}> Me${mineIsUsual ? " (you're the usual person for this)" : " - the card comes to me"}</label>
+      ${mineIsUsual ? "" : `<label><input type="radio" name="luwho" data-lu="who" value="usual"${f.who === "usual" ? " checked" : ""}> ${esc(usual || "The usual person")} - ${usual ? "the usual person for this kind of update" : "as the routing rules say"}</label>`}</fieldset>
+    ${f.who === "me" ? `<label style="grid-column:1/-1">Updated database PDF (optional)<input type="file" id="lufile" accept="application/pdf,.pdf"><span class="fn">${f.file ? "Chosen: " + esc(f.file.name) : "If the report is already updated, attach the export now: the card is closed for you and DIANA checks the PDF at its next hourly check. Otherwise attach it to the card later."}</span></label>` : ""}</div>
+    <div class="prev">The card will read: <b id="luprev">${esc(luTitle(d, f))}</b>${trk.length ? " · " + esc(trk.join(" · ")) : ""}</div>
+    <div class="row"><button class="btn pri" type="submit">Log update</button><button class="btn" type="button" data-lucancel>Cancel</button></div></form>`;
 }
 const COUNTRIES = "United Kingdom|Ireland|France|Italy|Germany|Spain|Netherlands|Belgium|Luxembourg|Switzerland|Austria|Portugal|Sweden|Norway|Denmark|Finland|Iceland|Greece|Poland|Czech Republic|Hungary|Romania|Bulgaria|Croatia|Slovenia|Slovakia|Estonia|Latvia|Lithuania|Cyprus|Malta|Serbia|Turkey|Ukraine|Jersey|Guernsey|Isle of Man|Gibraltar|Liechtenstein|Monaco|United States|Canada|Australia|Japan|India|China".split("|");
 const dealActions = d => `${canEdit() && !d.deal_number && d.coverage_status === "reported" && (d.writing_note || "").startsWith("Being written by") ? `<button class="btn sm" data-finish="${esc(d.id)}" title="The report is written and saved as a draft on the admin site">Finished - ready to check</button> ` : ""}${canEdit() && (d.coverage_status === "logged_only" || d.coverage_status === "awaiting_decision") ? `<button class="btn sm" data-write="${esc(d.id)}">Write report</button>` : ""}${canEdit() && !d.deal_number && ["write_requested","logged_only","awaiting_decision"].includes(d.coverage_status) && !(d.coverage_status === "write_requested" && d.urgent_at) ? ` <button class="btn sm" data-now="${esc(d.id)}" title="Urgent: the report writer takes this one next, ahead of the queue">Write now</button>` : ""}${canEdit() && !d.deal_number && (["write_requested","logged_only","awaiting_decision"].includes(d.coverage_status) || (d.coverage_status === "reported" && (d.writing_note || "").startsWith("Being written by"))) ? ` <select class="btn sm asg" data-assign="${esc(d.id)}" aria-label="Who writes this report" title="Give it to a person to write by hand (out of the report writer's queue), or back to the report writer"><option value="">${d.coverage_status === "reported" ? "Reassign…" : "Assign to…"}</option>${S.team.filter(m => m.role !== "viewer").map(m => `<option value="${esc(m.id)}"${d.coverage_status === "reported" && d.owner_id === m.id ? " disabled" : ""}>${esc(m.name)}${m.id === S.me.id ? " (me)" : ""}</option>`).join("")}${d.coverage_status === "reported" ? `<option value="writer">Report writer</option>` : ""}</select>` : ""}${canEdit() && !d.deal_number && d.coverage_status !== "reported" && d.coverage_status !== "excluded" ? (S.removing === d.id ? `<div class="rm"><input id="rmreason" placeholder="Why? e.g. not European" aria-label="Reason for removing"><button class="btn sm" data-rmgo="${esc(d.id)}">Remove</button><button class="btn sm" data-rmcancel>Cancel</button></div>` : ` <button class="btn sm" data-rm="${esc(d.id)}">Remove</button>`) : ""}${canEdit() && d.coverage_status === "excluded" ? `<button class="btn sm" data-restore="${esc(d.id)}">Put back</button>` : ""}`;
@@ -683,7 +726,7 @@ function drawerHtml() {
       ${wantsExport && activeOnly(c) ? `<div class="ask">When you've made the change, attach the fresh PDF export below. DIANA reads it and checks the update went in correctly.</div>` : ""}
       ${c.detail || T.h || src ? `<div class="sec"><h4>What happened</h4>${c.detail ? `<p>${esc(c.detail)}</p>` : T.h ? `<p>${esc(T.h)}</p>` : ""}${src ? `<p style="margin-top:6px"><a href="${esc(src)}" target="_blank" rel="noopener">Open the source ↗</a></p>` : ""}</div>` : ""}
       ${c.decision ? `<div class="sec"><h4>Decision</h4><p>${c.decision === "write" ? "Write it" : "Skip"}${c.decision_note ? " · " + esc(c.decision_note) : ""}</p></div>` : ""}
-      ${c.verify_note ? `<div class="sec"><h4>DIANA's check of the uploaded report${c.check_failed ? ` <span class="errtag">Possible error</span>` : c.check_ignored_at ? ` <span class="igntag">Ignored</span>` : ""}</h4>${c.check_failed ? `<p style="font-size:12px;color:var(--t2);margin:0 0 6px">Correct the report on the admin site, export the PDF again and attach it here: the flag clears when the new file passes. If you don't agree it's an error, press Ignore below.</p>` : ""}<p${c.check_failed || (c.status !== "verified" && !c.check_ignored_at) ? ' class="ask" style="background:var(--rb);color:var(--r)"' : ""}>${esc(c.verify_note)}</p>${c.check_ignored_at && !c.check_failed ? `<p class="ask" style="margin-top:6px;background:var(--ab);color:var(--am)">${esc(ignLine(c))}</p>` : ""}${c.check_failed && c.status !== "verified" && canEdit() ? `<div class="dn ignbox"><textarea id="ignnote" placeholder="Not an error? Say why (optional). It goes on the card for Phil to see." aria-label="Why it isn't an error"></textarea><div class="acts"><button class="btn" data-ignore>Ignore: not an error</button></div></div>` : ""}</div>` : ""}
+      ${c.verify_note ? `<div class="sec"><h4>DIANA's check of the uploaded report${c.check_failed ? ` <span class="errtag">Possible error</span>` : c.check_ignored_at ? ` <span class="igntag">Ignored</span>` : ""}</h4>${c.check_failed ? `<p style="font-size:12px;color:var(--t2);margin:0 0 6px">Correct the report on the admin site, export the PDF again and attach it here: the flag clears when the new file passes. If you don't agree it's an error, press Ignore below.</p>` : ""}<p${c.check_failed || (c.status !== "verified" && !c.check_ignored_at) ? ' class="ask" style="background:var(--rb);color:var(--r)"' : ""}>${esc(c.verify_note)}</p>${c.check_ignored_at && !c.check_failed ? `<p class="ask" style="margin-top:6px;background:var(--ab);color:var(--am)">${esc(ignLine(c))}</p>` : ""}${c.check_failed && c.status !== "verified" && canEdit() ? `<div class="dn ignbox"><textarea id="ignnote" placeholder="Not an error? Say why (optional). It stays on the card." aria-label="Why it isn't an error"></textarea><div class="acts"><button class="btn" data-ignore>Ignore: not an error</button></div></div>` : ""}</div>` : ""}
       ${metaRows ? `<div class="sec"><h4>Figures</h4><dl class="kv">${metaRows}</dl></div>` : ""}
       ${c.qa_flags && c.qa_flags.length ? `<div class="sec"><h4>QA flags</h4><ul class="qa">${c.qa_flags.map(f => `<li>${esc(typeof f === "string" ? f : JSON.stringify(f))}</li>`).join("")}</ul></div>` : ""}
       ${x && x.draft ? `<div class="sec"><h4>Draft report</h4><p style="color:var(--t2)">Written ${esc(fmtDT(x.draft.created_at))}${x.draft.folder ? " · files in " + esc(x.draft.folder) : ""}${x.draft.uploaded_at ? " · uploaded " + esc(fmtDT(x.draft.uploaded_at)) : ""}</p>${x.draft.reviewer_note ? `<p class="ask" style="margin-top:6px">Independent review: ${esc(x.draft.reviewer_note)}</p>` : ""}${x.draft.upload_result ? `<p style="margin-top:6px">Upload: ${esc(x.draft.upload_result)}</p>` : ""}<details style="margin-top:8px"><summary style="cursor:pointer;font-weight:600;color:var(--a)">Read the draft (${Math.round(x.draft.content.length / 1000)}k characters)</summary><div class="acts" style="margin:8px 0"><button class="btn sm" data-copydraft>Copy the text</button></div><pre id="drafttext" style="white-space:pre-wrap;overflow-wrap:anywhere;font:500 11.5px/1.5 var(--mono);background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:12px;max-height:60vh;overflow:auto">${esc(x.draft.content)}</pre></details></div>` : ""}
@@ -732,7 +775,7 @@ async function openCard(id, quiet) {
   try { const d = await api.detail(id); if (S.sel === id) { S.detail = d; const cb = $("#cbody"), keepC = cb ? cb.value : "", dn = $("#dnote"), keepD = dn ? dn.value : ""; render(); if ($("#cbody")) $("#cbody").value = keepC; if ($("#dnote")) $("#dnote").value = keepD; } } catch (e) { toast(errMsg(e), true); }
 }
 function closeCard() { S.sel = null; S.detail = null; render(); }
-function setTab(t, push) { if (!TABS.some(x => x[0] === t)) t = "mywork"; S.tab = t; S.q = ""; S.status = t === "found" ? "everything" : "active"; S.sel = null; S.detail = null; if (push) { try { history.replaceState(null, "", "#" + t); } catch (e) {} } try { localStorage.setItem("board.tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
+function setTab(t, push) { if (!TABS.some(x => x[0] === t)) t = "mywork"; S.tab = t; S.q = ""; S.status = t === "found" ? "everything" : "active"; S.sel = null; S.detail = null; S.lu = null; if (push) { try { history.replaceState(null, "", "#" + t); } catch (e) {} } try { localStorage.setItem("board.tab", t); } catch (e) {} render(); window.scrollTo(0, 0); }
 
 document.addEventListener("click", async e => {
   const el = s => e.target.closest(s); let t;
@@ -745,6 +788,8 @@ document.addEventListener("click", async e => {
   if ((t = el("[data-now]"))) { try { await api.writeNow(t.dataset.now); toast(await api.startWriter()); await reload(true); } catch (err) { toast(errMsg(err), true); } return; }
   if (el("[data-addopen]")) { S.adding = true; S.af = AF0(); render(); const i = document.querySelector('[data-af="target"]'); if (i) i.focus(); return; }
   if (el("[data-addcancel]")) { S.adding = false; S.af = null; return render(); }
+  if ((t = el("[data-luopen]"))) { const d = S.deals[t.dataset.luopen]; if (!d) return; S.lu = LU0(d); render(); const i = document.querySelector('[data-lu="what"]'); if (i) { i.focus(); i.select(); } return; }
+  if (el("[data-lucancel]")) { S.lu = null; return render(); }
   if ((t = el("[data-finish]"))) return act(() => api.finishDeal(t.dataset.finish), "Sent for the final check.");
   if ((t = el("[data-claim]"))) return act(() => api.claimDeal(t.dataset.claim), "It's yours. The report writer will leave it alone.");
   if ((t = el("[data-rm]"))) { S.removing = t.dataset.rm; render(); const i = $("#rmreason"); if (i) i.focus(); return; }
@@ -758,7 +803,7 @@ document.addEventListener("click", async e => {
     if (el("[data-pick]")) return act(() => api.pick(id), "It's yours. Find it under My work.");
     if ((t = el("[data-decide]"))) { const note = $("#dnote").value.trim(); return act(() => api.decide(id, t.dataset.decide, note), t.dataset.decide === "write" ? "Queued for a report" : "Skipped and logged"); }
     if (el("[data-reassign]")) { const to = $("#rto").value; return act(() => api.reassign(id, to), "Reassigned"); }
-    if (el("[data-ignore]")) { const n = ($("#ignnote") ? $("#ignnote").value : "").trim(); return act(() => api.ignoreCheck(id, n), "Possible error ignored. The card is marked done."); }
+    if (el("[data-ignore]")) { const n = ($("#ignnote") ? $("#ignnote").value : "").trim(); return act(() => api.ignoreCheck(id, n), "Possible error ignored. The card is closed."); }
     if (el("[data-comment]")) { const b = $("#cbody").value.trim(); if (!b) return; $("#cbody").value = ""; return act(() => api.comment(id, b)); }
     if (el("[data-upload]")) return $("#ffile").click();
     if (el("[data-copydraft]")) { const tx = $("#drafttext").textContent; try { await navigator.clipboard.writeText(tx); toast("Draft copied"); } catch (e) { const r = document.createRange(); r.selectNodeContents($("#drafttext")); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); toast("Text selected. Press Ctrl+C to copy."); } return; }
@@ -766,12 +811,25 @@ document.addEventListener("click", async e => {
   if ((t = el("[data-card]"))) return openCard(t.dataset.card);
 });
 document.addEventListener("change", e => {
+  if (e.target.id === "lufile" && S.lu) {
+    const f = e.target.files[0] || null, d = S.deals[S.lu.deal], num = f ? (f.name.match(/^(\d{7})/) || [])[1] : null;
+    if (f && !/\.pdf$/i.test(f.name)) { e.target.value = ""; return toast("Choose the PDF exported from the admin site.", true); }
+    if (f && f.size > 50 * 1024 * 1024) { e.target.value = ""; return toast("That file is over 50 MB.", true); }
+    if (f && num && d && d.deal_number && num !== d.deal_number) { e.target.value = ""; return toast("That PDF is for deal " + num + ", not " + d.deal_number + ".", true); }
+    S.lu.file = f; return render();
+  }
+  if (S.lu && e.target.dataset && (e.target.dataset.lu === "kind" || e.target.dataset.lu === "who")) {
+    if (e.target.dataset.lu === "kind") { const k = e.target.value, w = (S.lu.what || "").trim(); if (!w || w === LU_KINDS[S.lu.kind][1]) S.lu.what = LU_KINDS[k][1]; S.lu.kind = k; }
+    else S.lu.who = e.target.value;
+    return render();
+  }
   if (e.target.id === "ffile" && e.target.files[0] && S.sel) { const f = e.target.files[0], kind = $("#fkind").value, id = S.sel; if (f.size > 50 * 1024 * 1024) return toast("That file is over 50 MB.", true); toast("Uploading " + f.name + "…"); return act(() => api.attach(id, f, kind), "Attached " + f.name); }
   if (e.target.dataset.assign && e.target.value) { const v = e.target.value, m = v === "writer" ? null : v, who = m ? S.team.find(x => x.id === m).name : null; return act(() => api.assignDeal(e.target.dataset.assign, m), who ? "Assigned to " + who + ". The report writer will leave it alone." : "Back in the report writer's queue."); }
   if (e.target.dataset.owner) return act(() => api.setDealOwner(e.target.dataset.owner, e.target.value || null), "Responsible person updated");
   if (e.target.id === "viewas") { S.me = S.team.find(m => m.id === e.target.value); S.person = "all"; render(); }
 });
-document.addEventListener("input", e => { if (e.target.id === "q") { S.q = e.target.value; render(); } if (e.target.dataset && e.target.dataset.af && S.af) S.af[e.target.dataset.af] = e.target.value; });
+document.addEventListener("input", e => { if (e.target.id === "q") { S.q = e.target.value; render(); } if (e.target.dataset && e.target.dataset.af && S.af) S.af[e.target.dataset.af] = e.target.value;
+  if (S.lu && e.target.dataset && e.target.dataset.lu && e.target.dataset.lu !== "kind" && e.target.dataset.lu !== "who") { S.lu[e.target.dataset.lu] = e.target.value; const p = $("#luprev"), d = S.deals[S.lu.deal]; if (p && d) p.textContent = luTitle(d, S.lu); } });
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "rmreason") { e.preventDefault(); const b = document.querySelector("[data-rmgo]"); if (b) b.click(); } });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && S.sel) return closeCard();
@@ -783,6 +841,21 @@ document.addEventListener("submit", async e => {
     if (!f.target || !f.country) return toast("Enter the target and its country.", true);
     try { await api.addDeal(f); S.adding = false; S.af = null; S.q = ""; toast(f.action === "now" ? "Added. " + await api.startWriter() : { queue: "Added and queued for the report writer.", mine: "Added in your name.", log: "Added to the list." }[f.action]); await reload(true); } catch (err) { toast(errMsg(err), true); }
     return;
+  }
+  if (e.target.id === "luf") {
+    e.preventDefault(); if (!S.lu) return;
+    const f = { ...S.lu }; ["what", "url", "detail"].forEach(k => f[k] = (f[k] || "").trim());
+    if (!f.what) return toast("Say in a few words what happened.", true);
+    if (f.date && f.date > today()) return toast("The date is in the future.", true);
+    const btn = e.target.querySelector('button[type="submit"]'); if (btn) { btn.disabled = true; btn.textContent = "Logging…"; }
+    let cardId;
+    try { cardId = await api.logUpdate(f); } catch (err) { if (btn) { btn.disabled = false; btn.textContent = "Log update"; } return toast(errMsg(err), true); }
+    S.lu = null; const usual = usualPerson(S.deals[f.deal], f.kind);
+    if (f.who === "me" && f.file && cardId) {
+      try { toast("Uploading " + f.file.name + "…"); await api.attach(cardId, f.file, "export"); await api.setStatus(cardId, "done"); toast("Logged and closed. DIANA checks the PDF at its next hourly check."); }
+      catch (err) { toast("The update is logged, but the PDF did not attach (" + errMsg(err) + "). Attach it to the card on My work.", true); }
+    } else toast(f.who === "me" ? "Logged. The card is on your My work: attach the updated export there when it's ready." : "Logged and sent to " + (usual || "the usual person") + ".");
+    await reload(true); return;
   }
   if (e.target.id !== "login") return; e.preventDefault();
   const email = $("#lemail").value.trim().toLowerCase();
