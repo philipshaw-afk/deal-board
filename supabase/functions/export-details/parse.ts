@@ -11,6 +11,7 @@ export type Parsed = {
   fields: Record<string, string | number>;
   key_dates: Record<string, string>;
   overview: string | null; profiles: string | null; background: string | null; financial_notes: string | null;
+  target_details: string | null;
   warnings: string[];
 };
 
@@ -382,6 +383,7 @@ export function parseReport(pages: Item[][]): Parsed {
     cols, fields, key_dates,
     overview: c.overview, profiles: c.profiles, background: c.background,
     financial_notes: [c.notes, payment].filter(Boolean).join("\n\n") || null,
+    target_details: monoText(S("Target Details")).trim() || null,
     warnings,
   };
 }

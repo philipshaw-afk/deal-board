@@ -25,7 +25,11 @@ async function readPdf(path: string) {
   return parseReport(pages);
 }
 
+// The database starts the next reader (pg_net, after this call returns), so readers never wait on each other.
+// Older databases without that permission fall back to calling the next reader directly.
 async function next() {
+  const { error } = await sb.rpc("kick_export_jobs");
+  if (!error) return;
   const { count } = await sb.from("export_parse_jobs").select("id", { count: "exact", head: true }).eq("status", "queued");
   if (count) await fetch(`${URL_}/functions/v1/export-details`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
 }
