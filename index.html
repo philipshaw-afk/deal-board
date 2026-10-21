@@ -257,6 +257,12 @@ h3::after{content:"";flex:1;height:1px;background:var(--b)}
 .login .by{display:flex;align-items:center;gap:8px;color:var(--t3);font-size:11.5px;margin-top:6px}
 .login .by img{height:24px;border-radius:4px;box-shadow:0 1px 4px rgba(15,23,41,.18)}
 .login .alt{font-size:11.5px;color:var(--t3);text-align:center;margin-top:-4px}
+.bulk{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:1.5px dashed var(--b);border-radius:12px;padding:14px 16px;margin-bottom:14px;background:var(--sf)}
+.bulk.over{border-color:var(--a);background:var(--al)}
+.bulk>div{flex:1;min-width:220px} .bulk b{display:block;font-size:13px} .bulk small{color:var(--t2);font-size:12px;display:block;margin-top:2px}
+.bulk .bar{height:6px;border-radius:4px;background:var(--b2);overflow:hidden;margin-top:8px} .bulk .bar i{display:block;height:100%;background:var(--a);transition:width .3s}
+.bulk ul{margin:6px 0 0 18px;font-size:12px;color:var(--t2);max-height:150px;overflow:auto}
+.bulk .err{color:var(--r)}
 .pwbox{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,calc(100% - 32px));background:var(--sf);border-radius:14px;box-shadow:var(--sm);z-index:31;padding:20px;display:flex;flex-direction:column;gap:12px}
 .pwbox h2{font-size:16px;letter-spacing:-.2px} .pwbox p{color:var(--t2);font-size:12.5px}
 .pwbox form{display:flex;flex-direction:column;gap:12px}
@@ -586,6 +592,7 @@ function viewPending() {
   const ds = Object.values(S.deals).filter(d => d.is_pending && (!q || dealLine(d).toLowerCase().includes(q))).sort((a, b) => (a.review_due || "9999").localeCompare(b.review_due || "9999") || (a.target || "").localeCompare(b.target || ""));
   const openFor = id => S.cards.filter(c => c.deal_id === id && activeOnly(c)).length;
   return `<div class="top"><div><div class="eyebrow">DIANA · Pending deals</div><h1>Pending deals</h1><p>Every deal still in progress, with the person responsible and when its database PDF was last uploaded here. Earliest expected completion first; deals with no date are at the end.${canEdit() ? " Found news on a deal yourself? Use <b>Log an update</b> on its row." : ""}</p></div><span class="sp"></span><div class="stats"><div class="stat"><b>${ds.length}</b><span>Pending</span></div><div class="stat${ds.some(d => d.deal_number && !d.exported_at) ? " warn" : ""}"><b>${ds.filter(d => d.deal_number && !d.exported_at).length}</b><span>No export yet</span></div></div></div>
+  ${LIVE && isManager() ? bulkBox() : ""}
   <div class="filters"><input type="search" id="q" placeholder="Filter by company or deal number" value="${esc(S.q)}" aria-label="Filter deals"></div>
   ${ds.length ? `<div class="tw"><table><thead><tr><th>Deal</th><th>Type</th><th>Status</th><th>Responsible</th><th>Expected completion / next review &#9650;</th><th>Last export</th><th class="r">Open cards</th>${canEdit() ? "<th></th>" : ""}</tr></thead><tbody>${ds.map(d => `<tr>
     <td><b>${esc(d.target)}</b><small>${esc([d.deal_number ? "#" + d.deal_number : "No number yet", d.bidder, d.target_country].filter(Boolean).join(" · "))}</small></td>
@@ -597,6 +604,70 @@ function viewPending() {
     <td class="r">${openFor(d.id) || ""}</td>${canEdit() ? `<td class="r">${S.lu && S.lu.deal === d.id ? "" : `<button class="btn sm" data-luopen="${esc(d.id)}" title="Log news you found yourself: a completion, a lapse or any other update">Log an update</button>`}</td>` : ""}</tr>${canEdit() && S.lu && S.lu.deal === d.id ? `<tr class="lurow"><td colspan="8">${luForm(d)}</td></tr>` : ""}`).join("")}</tbody></table></div>`
   : S.q ? `<div class="empty"><b>No pending deal matches "${esc(S.q)}"</b>A deal appears here once it has its database deal number - when its exported PDF is attached to its card or loaded from Phil's PC. Until then, look under Report queue or All deals found.</div>` : `<div class="empty"><b>No pending deals loaded yet</b>They appear once the pending-deals export and PDFs have been loaded from Phil's PC.</div>`}`;
 }
+/* ---------- Pending deals: upload database PDF exports in bulk (Phil / Graham) ---------- */
+// Drop the zip files (or PDFs) exported from the admin site. Each PDF goes to file storage as its deal's report,
+// then the database queues it and the export-details function reads its details into the deal.
+function bulkBox() {
+  const b = S.bulk;
+  if (!b) return `<div class="bulk" id="bulkbox"><div><b>Upload exports</b><small>Drop the zip files (or PDFs) exported from the admin site here. Each PDF becomes its deal's report on DIANA and the DataBase, and its details are read in.</small></div><label class="btn sm">Choose files<input type="file" id="bulkfile" accept=".zip,.pdf" multiple hidden></label></div>`;
+  const s = b.st || {}, read = (s.done || 0) + (s.failed || 0);
+  const [msg, pct] = b.phase === "unpack" ? ["Unpacking " + b.files + " file" + (b.files === 1 ? "" : "s") + "…", 2]
+    : b.phase === "upload" ? ["Uploading " + b.up + " of " + b.total + " PDFs…", 5 + 45 * b.up / Math.max(1, b.total)]
+    : b.phase === "read" ? ["Reading details: " + read + " of " + b.queued + " done" + (s.failed ? ", " + s.failed + " to look at" : "") + "…", 50 + 50 * read / Math.max(1, b.queued)]
+    : ["Finished: " + (s.done || 0) + " deal" + (s.done === 1 ? "" : "s") + " updated" + (s.failed ? ", " + s.failed + " to look at" : "") + (b.failedUp.length ? ", " + b.failedUp.length + " not uploaded" : "") + (b.skipped ? ", " + b.skipped + " skipped (no deal number in the file name)" : "") + ".", 100];
+  const probs = [...b.failedUp.map(t => ({ t, e: 1 })), ...((s.problems || []).map(p => ({ t: (p.file || "") + ": " + (p.error || ""), e: 1 }))),
+    ...((s.notes || []).map(n => ({ t: (n.file || "") + ": " + [].concat(n.notes || []).join("; ") })))];
+  return `<div class="bulk on" id="bulkbox"><div><b>${esc(msg)}</b><div class="bar"><i style="width:${Math.min(100, Math.round(pct))}%"></i></div>
+    ${probs.length ? `<ul>${probs.slice(0, 60).map(p => `<li${p.e ? ' class="err"' : ""}>${esc(p.t)}</li>`).join("")}${probs.length > 60 ? `<li>…and ${probs.length - 60} more</li>` : ""}</ul>` : ""}</div>
+    ${b.phase === "done" ? `<button class="btn sm" id="bulkclose">Close</button>` : `<small>Keep this tab open until it finishes.</small>`}</div>`;
+}
+const bulkRender = () => { const el = $("#bulkbox"); if (el && S.tab === "pending") el.outerHTML = bulkBox(); };
+let jszipP = null;
+const loadJSZip = () => jszipP || (jszipP = new Promise((ok, no) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"; sc.onload = ok; sc.onerror = () => { jszipP = null; no(new Error("Could not load the zip reader. Check your connection and try again.")); }; document.head.appendChild(sc); }));
+async function bulkStart(list) {
+  const files = [...(list || [])].filter(f => /\.(zip|pdf)$/i.test(f.name));
+  if (!files.length) return toast("Choose the zip files or PDFs exported from the admin site.", true);
+  if (S.bulk && S.bulk.phase !== "done") return toast("An upload is already running.", true);
+  const b = S.bulk = { phase: "unpack", files: files.length, total: 0, up: 0, queued: 0, skipped: 0, failedUp: [], since: new Date(Date.now() - 5000).toISOString() };
+  bulkRender();
+  const pdfs = [];
+  try {
+    for (const f of files) {
+      if (/\.zip$/i.test(f.name)) { await loadJSZip(); const z = await JSZip.loadAsync(f); Object.values(z.files).forEach(e => { if (!e.dir && /\.pdf$/i.test(e.name)) pdfs.push({ name: e.name.split("/").pop(), get: () => e.async("blob") }); }); }
+      else pdfs.push({ name: f.name, get: async () => f });
+    }
+  } catch (e) { b.failedUp.push(errMsg(e)); b.phase = "done"; return bulkRender(); }
+  const ok = pdfs.filter(p => /^\d{7}/.test(p.name)); b.skipped = pdfs.length - ok.length;
+  const seen = new Set(), todo = ok.filter(p => !seen.has(p.name) && seen.add(p.name));
+  b.total = todo.length; b.phase = "upload"; bulkRender();
+  const stamp = new Date().toISOString().replace(/[:T]/g, "-").slice(0, 19), items = [];
+  let i = 0;
+  const worker = async () => {
+    while (i < todo.length) {
+      const p = todo[i++], clean = p.name.replace(/[^A-Za-z0-9._ ()-]/g, "_"), path = `exports/${stamp}/${clean}`;
+      try { const up = await sb.storage.from(BUCKET).upload(path, await p.get(), { contentType: "application/pdf" }); if (up.error) throw up.error; items.push({ number: clean.slice(0, 7), path, name: p.name }); }
+      catch (e) { b.failedUp.push(p.name + ": " + errMsg(e)); }
+      b.up++; bulkRender();
+    }
+  };
+  await Promise.all([1, 2, 3, 4].map(worker));
+  try { for (let k = 0; k < items.length; k += 50) { const { error } = await sb.rpc("register_exports", { p_items: items.slice(k, k + 50) }); if (error) throw error; } }
+  catch (e) { b.failedUp.push("Could not queue the PDFs for reading: " + errMsg(e)); b.phase = "done"; return bulkRender(); }
+  b.queued = items.length; b.phase = items.length ? "read" : "done"; bulkRender();
+  if (items.length) bulkPoll();
+}
+async function bulkPoll() {
+  const b = S.bulk; if (!b || b.phase !== "read") return;
+  try {
+    const { data: s, error } = await sb.rpc("export_jobs_status", { p_since: b.since }); if (error) throw error;
+    b.st = s;
+    if (!s.queued && !s.running && (s.done || 0) + (s.failed || 0) >= b.queued) { b.phase = "done"; bulkRender(); toast("Exports loaded: " + (s.done || 0) + " deals updated."); return reload(true); }
+    // if the readers have stopped with work still queued, start them again
+    if (s.queued && !s.running) { b.idle = (b.idle || 0) + 1; if (b.idle >= 3) { b.idle = 0; await sb.rpc("kick_export_jobs_ui"); } } else b.idle = 0;
+  } catch (e) { /* try again on the next tick */ }
+  bulkRender(); setTimeout(bulkPoll, 3000);
+}
+
 /* ---------- Pending deals: log news someone found themselves ---------- */
 const LU_KINDS = { completion: ["Completed", "completed"], failed: ["Lapsed, terminated or withdrawn", "terminated"], update: ["Other update", ""] };
 const LU0 = d => ({ deal: d.id, kind: "completion", what: "completed", date: "", detail: "", url: "", who: "me", file: null });
@@ -802,6 +873,7 @@ function setTab(t, push) { if (!TABS.some(x => x[0] === t)) t = "mywork"; S.tab 
 document.addEventListener("click", async e => {
   const el = s => e.target.closest(s); let t;
   if (el("#chpw")) { S.pw = true; render(); const i = $("#pw1"); if (i) i.focus(); return; }
+  if (el("#bulkclose")) { S.bulk = null; return render(); }
   if (el("[data-pwclose]")) { S.pw = false; return render(); }
   if ((t = el("[data-tick]"))) { e.stopPropagation(); const c = S.cards.find(x => x.id === t.dataset.tick); if (!c) return; const to = c.status === "done" ? "open" : "done"; return act(() => api.setStatus(c.id, to), to === "done" ? "Marked done" : "Reopened"); }
   if ((t = el("[data-tab]"))) return setTab(t.dataset.tab, true);
@@ -834,7 +906,16 @@ document.addEventListener("click", async e => {
   }
   if ((t = el("[data-card]"))) return openCard(t.dataset.card);
 });
+// files dragged onto the Pending deals tab: the Upload exports box takes them (and a near miss doesn't open the zip in the browser)
+const bulkTab = () => LIVE && S.tab === "pending" && isManager() && $("#bulkbox");
+document.addEventListener("dragover", e => { if (!bulkTab()) return; e.preventDefault(); const box = e.target.closest && e.target.closest("#bulkbox"); $("#bulkbox").classList.toggle("over", !!box && !(S.bulk && S.bulk.phase !== "done")); });
+document.addEventListener("dragleave", e => { const box = e.target.closest && e.target.closest("#bulkbox"); if (box && !box.contains(e.relatedTarget)) box.classList.remove("over"); });
+document.addEventListener("drop", e => {
+  if (!bulkTab()) return; e.preventDefault(); $("#bulkbox").classList.remove("over");
+  if (e.target.closest && e.target.closest("#bulkbox")) bulkStart(e.dataTransfer.files); else toast("Drop the files on the Upload exports box.", true);
+});
 document.addEventListener("change", e => {
+  if (e.target.id === "bulkfile") { const fl = e.target.files; bulkStart(fl); return; }
   if (e.target.id === "lufile" && S.lu) {
     const f = e.target.files[0] || null, d = S.deals[S.lu.deal], num = f ? (f.name.match(/^(\d{7})/) || [])[1] : null;
     if (f && !/\.pdf$/i.test(f.name)) { e.target.value = ""; return toast("Choose the PDF exported from the admin site.", true); }
