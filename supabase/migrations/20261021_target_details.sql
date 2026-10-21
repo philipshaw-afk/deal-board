@@ -4,7 +4,8 @@
 -- 3. apply_export_details(): fixes the "malformed array literal" note error; stores Target Details; a 'target' job
 --    re-reads only Target Details from a deal's current PDF.
 -- 4. The reader can ask the database to start the next reader (no more chains of readers waiting on each other).
--- 5. Re-queues the three PDFs that failed on the note error and restarts the queue.
+-- 5. Re-queues the PDFs that failed on the note error and restarts the queue.
+-- 6. A lapsed possible offer keeps the status "Proposed" (it is not reopened as pending).
 
 alter table public.deals add column if not exists target_details text;
 
@@ -47,7 +48,7 @@ language plpgsql security definer set search_path = '' as $$
 declare
   j public.export_parse_jobs; d public.deals; v_id uuid;
   c jsonb := coalesce(p_data -> 'cols', '{}'); pf jsonb := coalesce(p_data -> 'fields', '{}'); f jsonb;
-  notes text[] := '{}'; v_status text; v_value numeric; v_cur text; v_eur numeric;
+  notes text[] := '{}'; v_status text; v_pending boolean; v_value numeric; v_cur text; v_eur numeric;
 begin
   select * into j from public.export_parse_jobs where id = p_job;
   if j.id is null then return null; end if;
@@ -92,11 +93,16 @@ begin
     return jsonb_build_object('mismatch', true);
   end if;
 
-  -- a deal DIANA has already closed is not reopened by an export that still says pending
+  -- status. A possible offer that lapses keeps the status "Proposed" (M&A Monitor's convention), so an export saying
+  -- Proposed is taken as it is; but a deal DIANA has closed stays off the pending list. A deal DIANA knows has completed
+  -- or failed is not reopened by an export that still says Pending (the report is waiting to be updated).
   v_status := coalesce(c ->> 'deal_status', d.deal_status);
-  if lower(coalesce(d.deal_status, '')) in ('completed', 'failed') and lower(coalesce(c ->> 'deal_status', '')) in ('pending', 'proposed') then
+  v_pending := lower(coalesce(v_status, 'pending')) in ('pending', 'proposed');
+  if not coalesce(d.is_pending, true) and lower(coalesce(c ->> 'deal_status', '')) = 'proposed' and d.deal_number is not null then
+    v_pending := false;
+  elsif lower(coalesce(d.deal_status, '')) in ('completed', 'failed') and lower(coalesce(c ->> 'deal_status', '')) = 'pending' then
     notes := notes || ('kept ' || d.deal_status || ': the report still says ' || (c ->> 'deal_status'))::text;
-    v_status := d.deal_status;
+    v_status := d.deal_status; v_pending := false;
   end if;
 
   -- fields: the PDF's values win; a fuller consideration wording already held is kept
@@ -122,7 +128,7 @@ begin
     deal_type = coalesce(c ->> 'deal_type', deal_type),
     is_public = case when c ->> 'deal_type' is not null then (c ->> 'is_public')::boolean else is_public end,
     deal_status = v_status,
-    is_pending = lower(coalesce(v_status, 'pending')) in ('pending', 'proposed'),
+    is_pending = v_pending,
     value = v_value, currency = v_cur, value_eur = v_eur,
     date_announced = coalesce((c ->> 'date_announced')::date, date_announced),
     offer_price = coalesce((c ->> 'offer_price')::numeric, offer_price),
