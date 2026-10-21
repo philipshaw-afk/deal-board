@@ -256,6 +256,13 @@ h3::after{content:"";flex:1;height:1px;background:var(--b)}
 .login form{display:flex;flex-direction:column;gap:12px}
 .login .by{display:flex;align-items:center;gap:8px;color:var(--t3);font-size:11.5px;margin-top:6px}
 .login .by img{height:24px;border-radius:4px;box-shadow:0 1px 4px rgba(15,23,41,.18)}
+.login .alt{font-size:11.5px;color:var(--t3);text-align:center;margin-top:-4px}
+.pwbox{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(380px,calc(100% - 32px));background:var(--sf);border-radius:14px;box-shadow:var(--sm);z-index:31;padding:20px;display:flex;flex-direction:column;gap:12px}
+.pwbox h2{font-size:16px;letter-spacing:-.2px} .pwbox p{color:var(--t2);font-size:12.5px}
+.pwbox form{display:flex;flex-direction:column;gap:12px}
+.pwbox label{font-weight:600;font-size:12px;display:flex;flex-direction:column;gap:5px}
+.pwbox input{width:100%;border:1px solid var(--b);background:var(--bg);border-radius:8px;padding:9px 11px}
+.pwbox .acts{display:flex;gap:8px;justify-content:flex-end}
 .demo{position:relative;z-index:2}
 @media (max-width:900px){ .brand .cn,.brand .dv,.brand .dn small{display:none} .top h1{font-size:25px} }
 @media (prefers-reduced-motion:reduce){ .btn.pri:hover{transform:none} }
@@ -741,12 +748,27 @@ function drawerHtml() {
 }
 
 function loginHtml() {
-  return `<div class="wrap"><div class="login"><div class="dl"><img src="${LOGO.full}" alt="DIANA"></div><div class="sub">Deal ID and Notification App</div><h1>Sign in to DIANA</h1><p>Use your work email. We'll send you a sign-in link; no password needed.</p>
-    <form id="login"><label>Work email<input type="email" id="lemail" required autocomplete="email" placeholder="name@ma-monitor.co.uk"></label>
+  return `<div class="wrap"><div class="login"><div class="dl"><img src="${LOGO.full}" alt="DIANA"></div><div class="sub">Deal ID and Notification App</div><h1>Sign in to DIANA</h1><p>Use your work email and password. No password? Have a sign-in link emailed to you instead.</p>
+    <form id="login"><label>Work email<input type="email" id="lemail" required autocomplete="username" placeholder="name@ma-monitor.co.uk"></label>
+    <label>Password<input type="password" id="lpass" autocomplete="current-password"></label>
     ${S.authMsg ? `<div class="msg${S.authMsg.err ? " err" : ""}">${esc(S.authMsg.text)}</div>` : ""}
-    <button class="btn pri" type="submit">Email me a sign-in link</button></form>
+    <button class="btn pri" type="submit" id="lpw">Sign in</button>
+    <button class="btn" type="submit" id="llink">Email me a sign-in link instead</button>
+    <div class="alt">Sign-in links work once only, in the browser you asked from.</div></form>
     <div class="by"><img src="${LOGO.co}" alt=""><span>M&amp;A Monitor Ltd · team access only</span></div></div></div>`;
 }
+function pwHtml() {
+  return `<div class="scrim" data-pwclose></div><div class="pwbox" role="dialog" aria-label="Change password"><h2>Change your password</h2><p>Use at least 8 characters. You'll use it next time you sign in.</p>
+    <form id="pwf"><input type="email" value="${esc(S.session ? S.session.user.email : "")}" autocomplete="username" hidden>
+    <label>New password<input type="password" id="pw1" required minlength="8" autocomplete="new-password"></label>
+    <label>Type it again<input type="password" id="pw2" required minlength="8" autocomplete="new-password"></label>
+    <div class="acts"><button class="btn" type="button" data-pwclose>Cancel</button><button class="btn pri" type="submit">Save password</button></div></form></div>`;
+}
+const authErr = e => { const m = errMsg(e);
+  if (/invalid login credentials/i.test(m)) return "That email and password don't match. Check them, or email yourself a sign-in link instead.";
+  if (/rate limit/i.test(m)) return "Too many sign-in emails have gone out in the last hour. Sign in with your password, or try the link again later.";
+  if (/reauthenticat/i.test(m)) return "For security, sign out and back in, then change your password.";
+  return m; };
 function render() {
   const app = $("#app");
   if (LIVE && !S.session) { app.innerHTML = loginHtml(); return; }
@@ -755,7 +777,7 @@ function render() {
   }
   if (!S.me) return;
   const keep = document.activeElement && document.activeElement.id === "q" ? document.activeElement.selectionStart : null;
-  const typed = {}; ["cbody", "dnote", "ignnote"].forEach(k => { const t = $("#" + k); if (t && t.value) typed[k] = t.value; }); const typing = document.activeElement && typed[document.activeElement.id] != null ? document.activeElement.id : null;
+  const typed = {}; ["cbody", "dnote", "ignnote", "pw1", "pw2"].forEach(k => { const t = $("#" + k); if (t && t.value) typed[k] = t.value; }); const typing = document.activeElement && typed[document.activeElement.id] != null ? document.activeElement.id : null;
   const myOpen = S.cards.filter(c => c.assignee_id === S.me.id && activeOnly(c)).length;
   const queue = S.cards.filter(c => c.type === "report_check" && !c.owner_id && c.status === "open").length;
   const badge = { mywork: myOpen, tocheck: queue, all: S.cards.filter(activeOnly).length, queue: Object.values(S.deals).filter(d => d.coverage_status === "write_requested" && !d.deal_number).length };
@@ -763,8 +785,8 @@ function render() {
   app.innerHTML = `${LIVE ? "" : `<div class="demo" role="note"><b>Example data</b><span>These companies and cards are made up to show how DIANA works. View it as:</span><select id="viewas" aria-label="View as" style="background:transparent;color:inherit;border:1px solid currentColor;border-radius:6px;padding:2px 6px">${S.team.map(m => `<option value="${esc(m.id)}"${m.id === S.me.id ? " selected" : ""}>${esc(m.name)}</option>`).join("")}</select></div>`}
   <header class="hdr"><div class="wrap"><div class="brand"><img class="co" src="${LOGO.co}" alt="M&amp;A Monitor"><span class="cn">M&amp;A Monitor</span><span class="dv"></span><span class="dm"><img src="${LOGO.head}" alt=""></span><span class="dn"><b>DIANA</b><small>Deal ID and Notification App</small></span></div>
     <nav class="tabs" role="tablist">${TABS.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${S.tab === k}">${l}${badge[k] ? ` <b>${badge[k]}</b>` : ""}</button>`).join("")}</nav>
-    <div class="user">${LIVE ? `<span class="live" title="Live updates on"></span>` : ""}<span class="nm">${esc(S.me.name)}${canEdit() ? "" : " (view only)"}</span>${avatar(S.me.id)}${LIVE ? `<button class="btn sm" id="signout">Sign out</button>` : ""}</div></div></header>
-  <main class="wrap">${view}</main>${S.sel ? drawerHtml() : ""}`;
+    <div class="user">${LIVE ? `<span class="live" title="Live updates on"></span>` : ""}<span class="nm">${esc(S.me.name)}${canEdit() ? "" : " (view only)"}</span>${avatar(S.me.id)}${LIVE ? `<button class="btn sm" id="chpw" title="Change your password">Password</button><button class="btn sm" id="signout">Sign out</button>` : ""}</div></div></header>
+  <main class="wrap">${view}</main>${S.sel ? drawerHtml() : ""}${S.pw ? pwHtml() : ""}`;
   if (keep != null) { const q = $("#q"); if (q) { q.focus(); q.setSelectionRange(keep, keep); } }
   Object.entries(typed).forEach(([k, v]) => { const t = $("#" + k); if (t) t.value = v; }); if (typing && $("#" + typing)) $("#" + typing).focus();
 }
@@ -779,6 +801,8 @@ function setTab(t, push) { if (!TABS.some(x => x[0] === t)) t = "mywork"; S.tab 
 
 document.addEventListener("click", async e => {
   const el = s => e.target.closest(s); let t;
+  if (el("#chpw")) { S.pw = true; render(); const i = $("#pw1"); if (i) i.focus(); return; }
+  if (el("[data-pwclose]")) { S.pw = false; return render(); }
   if ((t = el("[data-tick]"))) { e.stopPropagation(); const c = S.cards.find(x => x.id === t.dataset.tick); if (!c) return; const to = c.status === "done" ? "open" : "done"; return act(() => api.setStatus(c.id, to), to === "done" ? "Marked done" : "Reopened"); }
   if ((t = el("[data-tab]"))) return setTab(t.dataset.tab, true);
   if ((t = el("[data-person]"))) { S.person = t.dataset.person; return render(); }
@@ -832,6 +856,7 @@ document.addEventListener("input", e => { if (e.target.id === "q") { S.q = e.tar
   if (S.lu && e.target.dataset && e.target.dataset.lu && e.target.dataset.lu !== "kind" && e.target.dataset.lu !== "who") { S.lu[e.target.dataset.lu] = e.target.value; const p = $("#luprev"), d = S.deals[S.lu.deal]; if (p && d) p.textContent = luTitle(d, S.lu); } });
 document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.id === "rmreason") { e.preventDefault(); const b = document.querySelector("[data-rmgo]"); if (b) b.click(); } });
 document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && S.pw) { S.pw = false; return render(); }
   if (e.key === "Escape" && S.sel) return closeCard();
   if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches("[data-card],[data-tick]")) { e.preventDefault(); e.target.click(); }
 });
@@ -857,12 +882,27 @@ document.addEventListener("submit", async e => {
     } else toast(f.who === "me" ? "Logged. The card is on your My work: attach the updated export there when it's ready." : "Logged and sent to " + (usual || "the usual person") + ".");
     await reload(true); return;
   }
+  if (e.target.id === "pwf") {
+    e.preventDefault(); const a = $("#pw1").value, b = $("#pw2").value;
+    if (a.length < 8) return toast("Use at least 8 characters.", true);
+    if (a !== b) return toast("The two passwords don't match.", true);
+    const btn = e.target.querySelector('button[type="submit"]'); if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+    const { error } = await sb.auth.updateUser({ password: a });
+    if (error) { if (btn) { btn.disabled = false; btn.textContent = "Save password"; } return toast(authErr(error), true); }
+    S.pw = false; render(); toast("Password changed. Use it next time you sign in."); return;
+  }
   if (e.target.id !== "login") return; e.preventDefault();
-  const email = $("#lemail").value.trim().toLowerCase();
-  S.authMsg = { text: "Sending…" }; render();
-  const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
-  S.authMsg = error ? { err: true, text: errMsg(error) } : { text: "Check your inbox for the sign-in link, then open it on this device." }; render();
+  const email = $("#lemail").value.trim().toLowerCase(), pass = $("#lpass").value;
+  const byLink = e.submitter && e.submitter.id === "llink";
+  if (!byLink && !pass) { S.authMsg = { err: true, text: "Enter your password, or email yourself a sign-in link instead." }; render(); if ($("#lemail")) $("#lemail").value = email; if ($("#lpass")) $("#lpass").focus(); return; }
+  S.authMsg = { text: byLink ? "Sending…" : "Signing in…" }; render(); if ($("#lemail")) $("#lemail").value = email;
+  const { error } = byLink
+    ? await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } })
+    : await sb.auth.signInWithPassword({ email, password: pass });
+  if (!byLink && !error) { S.authMsg = null; return; }
+  S.authMsg = error ? { err: true, text: authErr(error) } : { text: "Check your inbox for the sign-in link, then open it once, in this browser." }; render();
   if ($("#lemail")) $("#lemail").value = email;
+  if (error && !byLink && $("#lpass")) $("#lpass").focus();
 });
 
 /* ---------- start ---------- */
