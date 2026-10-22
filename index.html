@@ -346,6 +346,18 @@ let toastT; function toast(m, err) { const t = $("#toast"); t.textContent = m; t
 const errMsg = e => (e && (e.message || e.error_description)) || "Something went wrong. Try again.";
 
 /* ---------- data layer: live (Supabase) ---------- */
+// Supabase returns at most 1,000 rows per request, so a single select silently drops the rest.
+// allRows() reads the first page with a count, then fetches the remaining pages in parallel.
+// mk(opts) must build a fresh query with a stable order (add .order("id") as a tie-breaker).
+async function allRows(mk, size = 1000) {
+  const first = await mk({ count: "exact" }).range(0, size - 1);
+  if (first.error) return first;
+  const total = first.count || 0, step = Math.max(1, Math.min(size, first.data.length || size)), rest = [];
+  for (let from = first.data.length; from < total; from += step) rest.push(mk().range(from, from + step - 1));
+  const data = first.data.slice();
+  for (const p of await Promise.all(rest)) { if (p.error) return p; data.push(...p.data); }
+  return { data, error: null };
+}
 const liveApi = {
   async load() {
     const t = today(), since = new Date(Date.now() - 14 * 864e5).toISOString(), d60 = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10);
@@ -354,13 +366,13 @@ const liveApi = {
       sb.from("team_members").select("*").eq("active", true).order("name"),
       sb.from("absences").select("*").gte("end_date", t).order("start_date"),
       sb.from("routing_rules").select("*").order("id"),
-      sb.from("cards").select("*").or(`status.in.(open,stuck),created_at.gte.${since},done_at.gte.${since}`).order("created_at", { ascending: false }).limit(3000),
-      sb.from("deals").select(dcols).or(`is_pending.eq.true,date_found.gte.${d60}`).order("date_found", { ascending: false }).limit(4000)
+      allRows(o => sb.from("cards").select("*", o).or(`status.in.(open,stuck),created_at.gte.${since},done_at.gte.${since}`).order("created_at", { ascending: false }).order("id")),
+      allRows(o => sb.from("deals").select(dcols, o).or(`is_pending.eq.true,date_found.gte.${d60}`).order("date_found", { ascending: false }).order("id"))
     ]);
     for (const r of [team, abs, rules, cards, deals]) if (r.error) throw r.error;
     const map = {}; deals.data.forEach(d => map[d.id] = d);
     const missing = [...new Set(cards.data.map(c => c.deal_id).filter(id => id && !map[id]))];
-    if (missing.length) { const r = await sb.from("deals").select(dcols).in("id", missing); if (!r.error) r.data.forEach(d => map[d.id] = d); }
+    for (let k = 0; k < missing.length; k += 100) { const r = await sb.from("deals").select(dcols).in("id", missing.slice(k, k + 100)); if (!r.error) r.data.forEach(d => map[d.id] = d); }
     return { team: team.data, absences: abs.data, rules: rules.data, cards: cards.data, deals: map };
   },
   async detail(id) {
