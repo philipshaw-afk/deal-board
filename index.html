@@ -19,6 +19,7 @@
   --p:#6B4AE8; --pb:rgba(124,92,252,.12); --pub:#9333EA; --pubb:rgba(147,51,234,.12);
   --tl:#0D7490; --tb:rgba(13,116,144,.12);
   --in:#4338CA; --ib:rgba(67,56,202,.10);
+  --pk:#C2185B; --pkb:rgba(194,24,91,.11);
   --sh:0 1px 3px rgba(0,0,0,.05),0 0 0 1px rgba(0,0,0,.03); --sm:0 12px 40px rgba(15,23,41,.16);
   --hdr:rgba(255,255,255,.86); --scrim:rgba(15,23,41,.32);
   --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -32,6 +33,7 @@
   --g:#3CCB97; --gb:rgba(60,203,151,.16); --am:#E5B542; --ab:rgba(229,181,66,.16);
   --r:#FF7A5C; --rb:rgba(255,122,92,.16); --p:#A891FF; --pb:rgba(168,145,255,.16); --pub:#C99BFF; --pubb:rgba(201,155,255,.18);
   --tl:#4FC3DD; --tb:rgba(79,195,221,.15); --in:#9A93FF; --ib:rgba(154,147,255,.15);
+  --pk:#F472B6; --pkb:rgba(244,114,182,.16);
   --sh:0 0 0 1px rgba(255,255,255,.07); --sm:0 12px 40px rgba(0,0,0,.5);
   --hdr:rgba(21,28,46,.9); --scrim:rgba(0,0,0,.55); color-scheme:dark } }
 :root[data-theme="dark"]{
@@ -41,6 +43,7 @@
   --g:#3CCB97; --gb:rgba(60,203,151,.16); --am:#E5B542; --ab:rgba(229,181,66,.16);
   --r:#FF7A5C; --rb:rgba(255,122,92,.16); --p:#A891FF; --pb:rgba(168,145,255,.16); --pub:#C99BFF; --pubb:rgba(201,155,255,.18);
   --tl:#4FC3DD; --tb:rgba(79,195,221,.15); --in:#9A93FF; --ib:rgba(154,147,255,.15);
+  --pk:#F472B6; --pkb:rgba(244,114,182,.16);
   --sh:0 0 0 1px rgba(255,255,255,.07); --sm:0 12px 40px rgba(0,0,0,.5);
   --hdr:rgba(21,28,46,.9); --scrim:rgba(0,0,0,.55); color-scheme:dark }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -127,8 +130,8 @@ td{padding:9px 12px;border-top:1px solid var(--b2);vertical-align:top}
 tr:first-child td{border-top:0}
 td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
 td small{display:block;color:var(--t3);font-size:11.5px}
-.cov-reported{background:var(--gb);color:var(--g)} .cov-awaiting_decision{background:var(--ab);color:var(--am)}
-.cov-write_requested{background:var(--pb);color:var(--p)} .cov-logged_only{background:var(--b2);color:var(--t2)} .cov-excluded{background:var(--rb);color:var(--r)}
+.cov-reported{background:var(--al);color:var(--a)} .cov-awaiting_decision{background:var(--ab);color:var(--am)}
+.cov-write_requested{background:var(--pkb);color:var(--pk)} .cov-logged_only{background:var(--b2);color:var(--t2)} .cov-excluded{background:var(--rb);color:var(--r)}
 .addf{border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:14px;background:var(--sf)} .addf h2{font-size:14px;margin:0 0 10px} .addf .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px} .addf label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:600;color:var(--t2)} .addf input,.addf select{border:1px solid var(--b);border-radius:8px;padding:7px 9px;background:var(--bg);color:var(--t);font:inherit;font-weight:400;min-width:0} .addf .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px} .addf .hint{font-size:11.5px;color:var(--t2)}
 .lurow>td{padding:2px 16px 14px!important;border-top:0!important} tr.lurow:hover{background:transparent} .luf{margin:0;position:sticky;left:16px;max-width:calc(100vw - 64px);box-sizing:border-box} .luf h2 small{font-weight:400;color:var(--t2);margin-left:6px} .luf .who{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;min-width:0} .luf .who legend{font-size:11.5px;font-weight:600;color:var(--t2);padding:0;margin-bottom:4px} .luf .who label{flex-direction:row;align-items:center;gap:8px;font-size:12.5px;font-weight:400;color:var(--t)} .luf input[type=radio]{padding:0;border:0;margin:0;width:auto;accent-color:var(--a)} .luf input[type=file]{padding:6px 8px} .luf .fn{font-weight:400;color:var(--t2)} .luf .prev{font-size:12px;color:var(--t2);margin-top:12px} .luf .prev b{color:var(--t);font-weight:600}
 .pub b,.pub b a,.row.pub .ti b{color:var(--pub)} .pub b a:hover{color:var(--pub);text-decoration:underline} .pubtag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:var(--pubb);color:var(--pub);font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;vertical-align:middle} tr.pubrow .qn{background:var(--pubb);color:var(--pub)} tr.pubrow.next .qn{background:var(--pub);color:#fff}
@@ -272,6 +275,20 @@ h3::after{content:"";flex:1;height:1px;background:var(--b)}
 .demo{position:relative;z-index:2}
 @media (max-width:900px){ .brand .cn,.brand .dv,.brand .dn small{display:none} .top h1{font-size:25px} }
 @media (prefers-reduced-motion:reduce){ .btn.pri:hover{transform:none} }
+
+/* ---- new-deal stage colours: pink = in the Report queue or being written by a person, amber = written and waiting to be taken, green = waiting for Phil's final check ---- */
+.row.st-pink{background:color-mix(in srgb,var(--pk) 8%,transparent);box-shadow:inset 3px 0 0 var(--pk)}
+.row.st-amber{background:color-mix(in srgb,var(--am) 9%,transparent);box-shadow:inset 3px 0 0 var(--am)}
+.row.st-green{background:color-mix(in srgb,var(--g) 9%,transparent);box-shadow:inset 3px 0 0 var(--g)}
+.row[class*=" st-"]:hover,.row.sel[class*=" st-"]{background:var(--al)}
+tr.st-pink{background:color-mix(in srgb,var(--pk) 8%,transparent)} tr.st-pink>td:first-child{box-shadow:inset 3px 0 0 var(--pk)}
+tr.st-amber{background:color-mix(in srgb,var(--am) 9%,transparent)} tr.st-amber>td:first-child{box-shadow:inset 3px 0 0 var(--am)}
+tr.st-green{background:color-mix(in srgb,var(--g) 9%,transparent)} tr.st-green>td:first-child{box-shadow:inset 3px 0 0 var(--g)}
+tbody tr[class*="st-"]:hover{background:var(--al)}
+.tag.sg-pink{background:var(--pkb);color:var(--pk)} .tag.sg-amber{background:var(--ab);color:var(--am)} .tag.sg-green{background:var(--gb);color:var(--g)}
+.legend{display:flex;gap:6px 16px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--t2);margin:-6px 0 14px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:3px;flex:none}
 </style>
 
 </head>
@@ -524,8 +541,8 @@ function tickBtn(c) {
 function rowHtml(c, showType) {
   const d = dealOf(c), late = c.status === "open" && c.due_date && c.due_date < today();
   const sub = [c.meta && c.meta.updates > 1 ? c.meta.updates + " updates" : null, dealLine(d), c.created_by && c.created_by !== "daily-run" ? "from " + c.created_by : null].filter(Boolean).join(" · ");
-  const pub = S.tab === "tocheck" && d && d.is_public;
-  return `<div class="row${pub ? " pub" : ""}${c.check_failed ? " bad" : ""}${c.priority && c.status !== "done" && c.status !== "verified" ? " prio" : ""}${S.sel === c.id ? " sel" : ""}${c.status === "done" || c.status === "verified" ? " fin" : ""}" data-card="${esc(c.id)}" role="button" tabindex="0">
+  const pub = S.tab === "tocheck" && d && d.is_public, st = cardStage(c);
+  return `<div class="row${pub ? " pub" : ""}${stageCls(st)}${c.check_failed ? " bad" : ""}${c.priority && c.status !== "done" && c.status !== "verified" ? " prio" : ""}${S.sel === c.id ? " sel" : ""}${c.status === "done" || c.status === "verified" ? " fin" : ""}" data-card="${esc(c.id)}"${st ? ` title="${esc(STAGE_KEY[st])}"` : ""} role="button" tabindex="0">
     ${tickBtn(c)}
     <span class="ti"><b>${esc(c.title)}${pub ? `<span class="pubtag">Public</span>` : ""}${c.priority && c.status !== "done" && c.status !== "verified" ? `<span class="priotag">Priority</span>` : ""}${c.check_failed ? `<span class="errtag">Possible error</span>` : ""}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</span>
     <span class="tg">${showType ? `<span class="tag" style="background:var(--${TYPES[c.type].c === "t2" ? "b2" : TYPES[c.type].c === "am" ? "ab" : TYPES[c.type].c === "in" ? "ib" : TYPES[c.type].c + "b"});color:var(--${TYPES[c.type].c})">${esc(TYPES[c.type].l)}</span>` : (c.qa_flags && c.qa_flags.length ? `<span class="tag" style="background:var(--ab);color:var(--am)">${c.qa_flags.length} QA flag${c.qa_flags.length > 1 ? "s" : ""}</span>` : "")}</span>
@@ -543,6 +560,30 @@ function groupByType(cards) {
 const sortCards = a => a.slice().sort((x, y) => ((y.check_failed ? 1 : 0) - (x.check_failed ? 1 : 0)) || ((y.priority && activeOnly(y) ? 1 : 0) - (x.priority && activeOnly(x) ? 1 : 0)) || (({ stuck: 0, open: 1, done: 2, verified: 3 })[x.status] - ({ stuck: 0, open: 1, done: 2, verified: 3 })[y.status]) || (x.due_date || "").localeCompare(y.due_date || "") || y.created_at.localeCompare(x.created_at));
 const ignLine = c => c.check_ignored_at ? "Ignored by " + ((member(c.check_ignored_by) || {}).name || "someone") + " on " + fmtDT(c.check_ignored_at) + (c.check_ignore_note ? ": " + c.check_ignore_note : " (no reason given)") : "";
 const activeOnly = c => c.status === "open" || c.status === "stuck" || (c.check_failed && c.status !== "verified");
+
+/* ---------- new-deal stage colours ---------- */
+// pink: in the Report queue, or being written by a person; amber: written, waiting for someone to take the check;
+// green: waiting for Phil's final check. A report someone is already checking keeps no colour.
+const STAGE_KEY = { pink: "In the queue or being written", amber: "Written, waiting to be taken", green: "Waiting for Phil's final check" };
+const dealWriting = d => !!d && !d.deal_number && (d.coverage_status === "write_requested" || (d.coverage_status === "reported" && (d.writing_note || "").startsWith("Being written by")));
+// open check cards by deal, worked out once per view: final check beats a check nobody has taken yet
+function stageIndex() {
+  const m = {};
+  S.cards.forEach(c => { if (!c.deal_id || !activeOnly(c)) return;
+    if (c.type === "final_check") m[c.deal_id] = "green";
+    else if (c.type === "report_check" && !c.owner_id && m[c.deal_id] !== "green") m[c.deal_id] = "amber"; });
+  return m;
+}
+const dealStage = (d, si) => !d ? null : dealWriting(d) ? "pink" : (si || stageIndex())[d.id] || null;
+function cardStage(c) {
+  if (c.check_failed || !activeOnly(c)) return null;
+  if (c.type === "final_check") return "green";
+  if (c.type !== "report_check") return null;
+  if (dealWriting(dealOf(c))) return "pink";
+  return c.owner_id ? null : "amber";
+}
+const stageCls = st => st ? " st-" + st : "";
+const stageLegend = () => `<div class="legend" role="note" aria-label="Colour key">${Object.entries(STAGE_KEY).map(([k, l]) => `<span><i style="background:var(--${{ pink: "pk", amber: "am", green: "g" }[k]})"></i>${esc(l)}</span>`).join("")}</div>`;
 const matchQ = c => { if (!S.q) return true; const q = S.q.toLowerCase(); return (c.title + " " + dealLine(dealOf(c))).toLowerCase().includes(q); };
 
 function viewMyWork() {
@@ -576,12 +617,15 @@ function viewAll() {
 }
 function viewToCheck() {
   const rc = S.cards.filter(c => c.type === "report_check" || c.type === "final_check");
-  const q = sortCards(rc.filter(c => c.type === "report_check" && !c.owner_id && c.status === "open"));
-  const prog = sortCards(rc.filter(c => c.type === "report_check" && c.owner_id && activeOnly(c)));
+  const unwritten = c => dealWriting(dealOf(c));
+  const q = sortCards(rc.filter(c => c.type === "report_check" && !c.owner_id && c.status === "open" && !unwritten(c)));
+  const prog = sortCards(rc.filter(c => c.type === "report_check" && c.owner_id && activeOnly(c) && !unwritten(c)));
   const fin = sortCards(rc.filter(c => c.type === "final_check" && activeOnly(c)));
+  const todo = sortCards(rc.filter(c => c.type === "report_check" && activeOnly(c) && unwritten(c)));
   const sec = (t, col, g, note) => g.length ? `<section class="grp" style="--gc:var(--${col})"><h2>${t} <span>${g.length}</span></h2><div class="list">${g.map(c => rowHtml(c, false)).join("")}</div></section>` : (note ? `<section class="grp"><h2>${t} <span>0</span></h2><div class="empty">${note}</div></section>` : "");
   return `<div class="top"><div><div class="eyebrow">DIANA · To check</div><h1>Reports to check</h1><p>New reports wait here until Phil, Laure or Kit takes one. A report checked by Laure or Kit goes to Phil for a final check before upload.</p></div></div>
-  ${sec("Waiting to be taken", "p", q, "<b>Queue is empty</b>New reports from the daily run land here, biggest deals first.")}${sec("Being checked", "a", prog)}${sec("Final check (Phil)", "in", fin)}`;
+  ${stageLegend()}
+  ${sec("Waiting to be taken", "am", q, "<b>Queue is empty</b>New reports from the daily run land here, biggest deals first.")}${sec("Being checked", "a", prog)}${sec("Final check (Phil)", "g", fin)}${sec("Report not written yet", "pk", todo)}`;
 }
 function ownerCell(d) {
   if (!isManager()) return esc((member(d.owner_id) || {}).name || "Unassigned");
@@ -727,15 +771,16 @@ function queueOrder() {
   return { q, held };
 }
 function viewQueue() {
-  const { q, held } = queueOrder(), ready = q.filter(d => !held.has(d.id)), urgent = q.filter(d => d.urgent_at).length;
+  const { q, held } = queueOrder(), ready = q.filter(d => !held.has(d.id)), urgent = q.filter(d => d.urgent_at).length, si = stageIndex();
   const hand = Object.values(S.deals).filter(d => d.coverage_status === "reported" && !d.deal_number && d.writing_note), byHand = hand.filter(d => d.writing_note.startsWith("Being written by")).sort((a, b) => (a.target || "").localeCompare(b.target || ""));
   const written = hand.filter(d => !d.writing_note.startsWith("Being written by")).sort((a, b) => (a.target || "").localeCompare(b.target || ""));
   const val = d => `${d.value != null ? esc((d.currency || "") + " " + fmtN(d.value) + "m") : "Not disclosed"}${d.value_eur != null && d.currency !== "EUR" ? `<small>EUR ${fmtN(d.value_eur)}m</small>` : ""}`;
   const name = d => `<span${d.is_public ? ' class="pub"' : ""}><b>${safeUrl(d.source_url) ? `<a href="${esc(d.source_url)}" target="_blank" rel="noopener">${esc(d.target)}</a>` : esc(d.target)}</b>${d.is_public ? `<span class="pubtag">Public</span>` : ""}</span><small>${esc([d.target_country, d.is_public ? "Public" : (d.deal_type || "Private")].filter(Boolean).join(" · "))}</small>`;
   const writing = d => d.writing_started_at && Date.now() - new Date(d.writing_started_at).getTime() < 4 * 36e5;
   return `<div class="top"><div><div class="eyebrow">DIANA · Report queue</div><h1>Report queue</h1><p>Reports waiting to be written, in the order the report writer will take them: urgent ones first, then UK and Irish public offers, then the largest. It writes up to six a day, back to back, Monday to Friday (urgent deals and UK / Irish public offers are written whatever the count), and puts each on the admin site as a draft. Public deals are shown in purple.</p></div><span class="sp"></span><div class="stats"><div class="stat${q.length ? " warn" : ""}"><b>${q.length}</b><span>Waiting</span></div><div class="stat"><b>${urgent}</b><span>Urgent</span></div><div class="stat"><b>${byHand.length}</b><span>With a person</span></div></div>${canEdit() && !S.adding ? `<button class="btn pri" data-addopen>Add a deal</button>` : ""}</div>
+  ${stageLegend()}
   ${canEdit() && S.adding ? addForm() : ""}
-  ${q.length ? `<div class="tw"><table class="qt"><thead><tr><th>Order</th><th>Target</th><th>Bidder / seller</th><th class="r">Value</th><th>Note</th><th></th></tr></thead><tbody>${q.map(d => { const pos = ready.indexOf(d) + 1; return `<tr class="${pos === 1 ? "next" : ""}${d.is_public ? " pubrow" : ""}">
+  ${q.length ? `<div class="tw"><table class="qt"><thead><tr><th>Order</th><th>Target</th><th>Bidder / seller</th><th class="r">Value</th><th>Note</th><th></th></tr></thead><tbody>${q.map(d => { const pos = ready.indexOf(d) + 1; return `<tr class="st-pink${pos === 1 ? " next" : ""}${d.is_public ? " pubrow" : ""}">
     <td class="num">${held.has(d.id) ? `<span class="tag cov-logged_only">On hold</span>` : `<span class="qn">${pos}</span>${writing(d) ? `<small><b>Being written now</b></small>` : pos === 1 ? `<small><b>Next</b></small>` : ""}`}${d.urgent_at ? `<small><span class="tag cov-excluded">Urgent</span></small>` : ""}</td>
     <td>${name(d)}</td>
     <td>${esc(d.bidder || "")}<small>${d.seller ? "Seller: " + esc(d.seller) : ""}</small></td>
@@ -743,30 +788,31 @@ function viewQueue() {
     <td>${held.has(d.id) ? `<small>Waiting for a document or an answer - see the card</small>` : ""}${d.writing_note ? `<small>${esc(d.writing_note)}</small>` : ""}</td>
     <td>${dealActions(d)}</td></tr>`; }).join("")}</tbody></table></div>`
   : `<div class="empty"><b>Nothing waiting to be written</b>Deals arrive here from the daily run, from Write report on All deals found, or from Add a deal.</div>`}
-  ${byHand.length ? `<h2 class="sec">Being written by a person</h2><div class="tw"><table><thead><tr><th>Target</th><th>Bidder / seller</th><th class="r">Value</th><th>Who</th><th></th></tr></thead><tbody>${byHand.map(d => `<tr>
+  ${byHand.length ? `<h2 class="sec">Being written by a person</h2><div class="tw"><table><thead><tr><th>Target</th><th>Bidder / seller</th><th class="r">Value</th><th>Who</th><th></th></tr></thead><tbody>${byHand.map(d => `<tr class="st-pink">
     <td>${name(d)}</td><td>${esc(d.bidder || "")}<small>${d.seller ? "Seller: " + esc(d.seller) : ""}</small></td><td class="r">${val(d)}</td>
     <td>${esc((S.team.find(m => m.id === d.owner_id) || {}).name || "")}</td><td>${dealActions(d)}</td></tr>`).join("")}</tbody></table></div>` : ""}
-  ${written.length ? `<h2 class="sec">Written - waiting for the final check or the database export</h2><div class="tw"><table><thead><tr><th>Target</th><th>Bidder / seller</th><th class="r">Value</th><th>Status</th></tr></thead><tbody>${written.map(d => `<tr>
+  ${written.length ? `<h2 class="sec">Written - waiting for the final check or the database export</h2><div class="tw"><table><thead><tr><th>Target</th><th>Bidder / seller</th><th class="r">Value</th><th>Status</th></tr></thead><tbody>${written.map(d => `<tr class="${stageCls(dealStage(d, si)).trim()}">
     <td>${name(d)}</td><td>${esc(d.bidder || "")}<small>${d.seller ? "Seller: " + esc(d.seller) : ""}</small></td><td class="r">${val(d)}</td><td>${esc(d.writing_note)}</td></tr>`).join("")}</tbody></table></div>` : ""}`;
 }
 function viewFound() {
-  const q = S.q.toLowerCase(), f = S.status;
+  const q = S.q.toLowerCase(), f = S.status, si = stageIndex();
   let ds = Object.values(S.deals).filter(d => !q || (dealLine(d) + " " + (d.seller || "") + " " + (d.sector || "")).toLowerCase().includes(q));
   const counts = k => ds.filter(d => d.coverage_status === k).length;
   const all = ds.filter(d => d.coverage_status !== "excluded"); ds = COVERAGE[f] ? ds.filter(d => d.coverage_status === f) : all;
   ds.sort((a, b) => (b.date_found || "").localeCompare(a.date_found || "") || (b.value_eur || 0) - (a.value_eur || 0));
   return `<div class="top"><div><div class="eyebrow">DIANA · All deals found</div><h1>All deals found</h1><p>Everything with a European element the daily run has found, whether or not it was written up. Deals with no value or under EUR 10m are logged here in case coverage expands.</p></div><span class="sp"></span>${canEdit() && !S.adding ? `<button class="btn pri" data-addopen>Add a deal</button>` : ""}</div>
+  ${stageLegend()}
   ${canEdit() && S.adding ? addForm() : ""}
   <div class="filters"><button class="chip" data-status="everything" aria-pressed="${!COVERAGE[f]}">All <small>${all.length}</small></button>${Object.entries(COVERAGE).map(([k, l]) => `<button class="chip" data-status="${k}" aria-pressed="${f === k}">${l} <small>${counts(k)}</small></button>`).join("")}
     <input type="search" id="q" placeholder="Filter by company, seller or sector" value="${esc(S.q)}" aria-label="Filter deals"></div>
-  ${ds.length ? `<div class="tw"><table><thead><tr><th>Found</th><th>Target</th><th>Bidder / seller</th><th>Type</th><th class="r">Value</th><th>Coverage</th><th></th></tr></thead><tbody>${ds.slice(0, 500).map(d => `<tr>
+  ${ds.length ? `<div class="tw"><table><thead><tr><th>Found</th><th>Target</th><th>Bidder / seller</th><th>Type</th><th class="r">Value</th><th>Coverage</th><th></th></tr></thead><tbody>${ds.slice(0, 500).map(d => { const st = dealStage(d, si); return `<tr class="${stageCls(st).trim()}">
     <td class="num">${esc(fmtD(d.date_found))}</td>
     <td><b>${safeUrl(d.source_url) ? `<a href="${esc(d.source_url)}" target="_blank" rel="noopener">${esc(d.target)}</a>` : esc(d.target)}</b><small>${esc([d.target_country, d.sector].filter(Boolean).join(" · "))}</small></td>
     <td>${esc(d.bidder || "")}<small>${d.seller ? "Seller: " + esc(d.seller) : ""}</small></td>
     <td>${d.is_public ? "Public" : esc(d.deal_type || "Private")}</td>
     <td class="r">${d.value != null ? esc((d.currency || "") + " " + fmtN(d.value) + "m") : "Not disclosed"}${d.value_eur != null && d.currency !== "EUR" ? `<small>EUR ${fmtN(d.value_eur)}m</small>` : ""}</td>
-    <td><span class="tag cov-${esc(d.coverage_status)}">${esc(COVERAGE[d.coverage_status])}</span>${d.reason_not_covered && d.coverage_status !== "reported" ? `<small>${esc(d.reason_not_covered)}</small>` : ""}${d.urgent_at && d.coverage_status === "write_requested" ? `<small><b>Urgent: next to be written</b></small>` : ""}${d.writing_note && !d.deal_number ? `<small>${esc(d.writing_note)}</small>` : ""}</td>
-    <td>${dealActions(d)}</td></tr>`).join("")}</tbody></table></div>`
+    <td>${st ? `<span class="tag sg-${st}" title="${esc(STAGE_KEY[st])}">${{ pink: d.coverage_status === "write_requested" ? "Report queued" : "Being written", amber: "Waiting to be taken", green: "Final check" }[st]}</span>` : `<span class="tag cov-${esc(d.coverage_status)}">${esc(COVERAGE[d.coverage_status])}</span>`}${d.reason_not_covered && d.coverage_status !== "reported" ? `<small>${esc(d.reason_not_covered)}</small>` : ""}${d.urgent_at && d.coverage_status === "write_requested" ? `<small><b>Urgent: next to be written</b></small>` : ""}${d.writing_note && !d.deal_number ? `<small>${esc(d.writing_note)}</small>` : ""}</td>
+    <td>${dealActions(d)}</td></tr>`; }).join("")}</tbody></table></div>`
   : `<div class="empty"><b>Nothing logged yet</b>The first daily run fills this list.</div>`}`;
 }
 function viewTeam() {
